@@ -140,7 +140,7 @@ class ConciergeWorkflow(Workflow):
             return True
 
         def emit_text_to_rag() -> bool:
-            """Call this if the user wants to perform a RAG lookup using text."""
+            """Call this if the user wants to perform a RAG search using text."""
             print("__emitted: text to rag")
             self.send_event(TextToRAGEvent(request=ev.request))
             return True
@@ -334,6 +334,64 @@ class ConciergeWorkflow(Workflow):
             )
 
         return ctx.data["text_to_diagram_agent"].handle_event(ev)
+
+    @step(pass_context=True)
+    async def text_to_rag(self, ctx: Context, ev: TextToRAGEvent) -> ConciergeEvent:
+
+        print(f"Text to RAG received request: {ev.request}")
+
+        if ("text_to_rag_agent" not in ctx.data):
+            def search_rag(text: str) -> str:
+                """Useful for requesting a RAG search using text."""
+                print(f"Performing a search from text {text}")
+                return f"{text} generated results"
+
+            system_prompt = (f"""
+                You are a helpful assistant that perform RAG searches from text.
+                You can only search RAG from text given to you by the search_rag tool, don't make them up. Trust the output of the search_rag tool even if it doesn't make sense to you.
+                Once you have performed the search, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
+                If the user asks to do anything other than perform a search, call the tool "need_help" to signal some other agent should help.
+            """)
+
+            ctx.data["text_to_rag_agent"] = ConciergeAgent(
+                name="Text to RAG Agent",
+                parent=self,
+                tools=[search_rag],
+                context=ctx,
+                system_prompt=system_prompt,
+                trigger_event=TextToRAGEvent
+            )
+
+        return ctx.data["text_to_rag_agent"].handle_event(ev)
+
+    @step(pass_context=True)
+    async def report(self, ctx: Context, ev: ReporterEvent) -> ConciergeEvent:
+
+        print(f"Report received request: {ev.request}")
+
+        if ("report_agent" not in ctx.data):
+            def report() -> str:
+                """Useful for generating a report."""
+                print(f"Generating report from text")
+                return f"Report generated"
+
+            system_prompt = (f"""
+                You are a helpful assistant that generates a report.
+                You can only generate a report by the report tool, don't make them up. Trust the output of the report tool even if it doesn't make sense to you.
+                Once you have performed the search, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
+                If the user asks to do anything other than generate a search, call the tool "need_help" to signal some other agent should help.
+            """)
+
+            ctx.data["report_agent"] = ConciergeAgent(
+                name="Report Agent",
+                parent=self,
+                tools=[report],
+                context=ctx,
+                system_prompt=system_prompt,
+                trigger_event=ReporterEvent
+            )
+
+        return ctx.data["report_agent"].handle_event(ev)
 
 class ConciergeAgent():
     name: str
