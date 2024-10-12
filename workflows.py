@@ -7,7 +7,17 @@ from llama_index.core.workflow import (
     StopEvent
 )
 
-from llama_index.llms.ollama import Ollama
+LLM=None
+
+try:
+    from llama_index.llms.azure_openai import AzureOpenAI
+    LLM = "AzureOpenAI"
+except ImportError:
+    try:
+        from llama_index.llms.ollama import Ollama
+        LLM = "Ollama"
+    except ImportError:
+        print("Unable to find a LLM")
 from llama_index.core.agent import FunctionCallingAgentWorker
 from llama_index.core.tools import FunctionTool
 from llama_index.utils.workflow import draw_all_possible_flows
@@ -56,8 +66,15 @@ class ConciergeWorkflow(Workflow):
         ctx.data["redirecting"] = None
         ctx.data["overall_request"] = None
 
-        ctx.data["llm"] = Ollama(model="llama3.1:8b", request_timeout=120.0)
-        # ctx.data["llm"] = Ollama(model="mixtral:8x7b", request_timeout=120.0)
+        if LLM == "AzureOpenAI":
+            ctx.data["llm"] = AzureOpenAI(
+                engine="testing-first-gbu-doc", model="gpt-4o", temperature=0.4
+            )
+        elif LLM == "Ollama":
+            ctx.data["llm"] = Ollama(model="llama3.1:8b", request_timeout=120.0)
+
+        ctx.data["requirements"] = None
+        ctx.data["flow_confirmed"] = False
 
         return ConciergeEvent()
 
@@ -243,7 +260,7 @@ class ConciergeWorkflow(Workflow):
     @step(pass_context=True)
     async def price_lookup(self, ctx: Context, ev: PriceLookupEvent) -> ConciergeEvent:
 
-        print(f"Price lookup received request: {ev.request}")
+        print(f"Price Lookup received request: {ev.request}")
 
         if ("price_lookup_agent" not in ctx.data):
             def lookup_price(name: str) -> str:
@@ -256,10 +273,24 @@ class ConciergeWorkflow(Workflow):
                 print("Searching for item or component")
                 return name.upper()
 
+            def has_requirements() -> bool:
+                """Checks if the user has provided the requirements."""
+                print("Price Lookup checking if user has provided the requirements")
+                if ctx.data["requirements"] is not None:
+                    return True
+                else:
+                    return False
+
+            def has_confirmed_flow() -> bool:
+                """Checks if the user has confirmed the flow."""
+                print("Price Lookup checking if user confirmed the flow")
+                return ctx.data["requirements"]
+
             system_prompt = (f"""
                 You are a helpful assistant that is looking up service prices.
                 The user may not know the name of the service they're interested in,
                 so you can help them look it up by a description of what the service does or provides.
+                The user can only request a price lookup if they have provided requirements and confirmed the flow, which you can check with the has_requirements tool and the flow_confirmed tool.
                 You can only look up names given to you by the search_for_service tool, don't make them up. Trust the output of the search_for_service tool even if it doesn't make sense to you.
                 Once you have retrieved a price, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
                 If the user asks to do anything other than look up a service price, call the tool "need_help" to signal some other agent should help.
@@ -268,7 +299,7 @@ class ConciergeWorkflow(Workflow):
             ctx.data["price_lookup_agent"] = ConciergeAgent(
                 name="Price Lookup Agent",
                 parent=self,
-                tools=[lookup_price, search_for_service],
+                tools=[lookup_price, search_for_service, has_requirements, has_confirmed_flow],
                 context=ctx,
                 system_prompt=system_prompt,
                 trigger_event=PriceLookupEvent
