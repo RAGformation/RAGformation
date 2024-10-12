@@ -75,6 +75,7 @@ class ConciergeWorkflow(Workflow):
                 Your job is to ask the user questions to figure out what they want to do, and give them the available things they can do.
                 That includes
                 * authenticating the user
+                * describe the requirements to the system for lookup
                 * looking up the price of a service     
                 * receiving the description of a system
                 * draw a diagram from a description
@@ -110,7 +111,7 @@ class ConciergeWorkflow(Workflow):
         return OrchestratorEvent(request=user_msg_str)
 
     @step(pass_context=True)
-    async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent | AuthenticateEvent | PriceLookupEvent | StopEvent:
+    async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent | AuthenticateEvent | PriceLookupEvent | ImageToTextEvent | TextToDiagramEvent | StopEvent:
 
         print(f"Orchestrator received request: {ev.request}")
 
@@ -122,31 +123,31 @@ class ConciergeWorkflow(Workflow):
 
         def emit_price_lookup() -> bool:
             """Call this if the user wants to look up the price of a service."""
-            print("__emitted: stock lookup")
+            print("__emitted: price lookup")
             self.send_event(PriceLookupEvent(request=ev.request))
             return True
 
         def emit_image_to_text() -> bool:
             """Call this if the user wants to extract text from an image."""
-            print("__emitted: account balance")
+            print("__emitted: image to text")
             self.send_event(ImageToTextEvent(request=ev.request))
             return True
 
         def emit_text_to_diagram() -> bool:
             """Call this if the user wants to describe a diagram using text."""
-            print("__emitted: transfer money")
+            print("__emitted: text to diagram")
             self.send_event(TextToDiagramEvent(request=ev.request))
             return True
 
         def emit_text_to_rag() -> bool:
             """Call this if the user wants to perform a RAG lookup using text."""
-            print("__emitted: transfer money")
+            print("__emitted: text to rag")
             self.send_event(TextToRAGEvent(request=ev.request))
             return True
 
         def emit_report() -> bool:
             """Call this if the user wants to generate a report."""
-            print("__emitted: transfer money")
+            print("__emitted: report")
             self.send_event(ReporterEvent(request=ev.request))
             return True
 
@@ -276,6 +277,63 @@ class ConciergeWorkflow(Workflow):
 
         return ctx.data["price_lookup_agent"].handle_event(ev)
 
+    @step(pass_context=True)
+    async def image_to_text(self, ctx: Context, ev: ImageToTextEvent) -> ConciergeEvent:
+
+        print(f"Image to Text received request: {ev.request}")
+
+        if ("image_to_text_agent" not in ctx.data):
+            def extract_text(image: str) -> str:
+                """Useful for extracting text from an image."""
+                print(f"Extracting text from image {image}")
+                return f"Image {image} contains Lorem ipsum dolor sit amet"
+
+            system_prompt = (f"""
+                You are a helpful assistant that extracts text from an image.
+                You can only extract text from images given to you by the extract_text tool, don't make them up. Trust the output of the extract_text tool even if it doesn't make sense to you.
+                Once you have extracted the text, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
+                If the user asks to do anything other than extract text from an image, call the tool "need_help" to signal some other agent should help.
+            """)
+
+            ctx.data["image_to_text_agent"] = ConciergeAgent(
+                name="Image to Text Agent",
+                parent=self,
+                tools=[extract_text],
+                context=ctx,
+                system_prompt=system_prompt,
+                trigger_event=ImageToTextEvent
+            )
+
+        return ctx.data["image_to_text_agent"].handle_event(ev)
+
+    @step(pass_context=True)
+    async def text_to_diagram(self, ctx: Context, ev: TextToDiagramEvent) -> ConciergeEvent:
+
+        print(f"Text to Diagram received request: {ev.request}")
+
+        if ("text_to_diagram_agent" not in ctx.data):
+            def generate_diagram(text: str) -> str:
+                """Useful for describing a diagram using text."""
+                print(f"Generating diagram from text {text}")
+                return f"{text} generated a diagram"
+
+            system_prompt = (f"""
+                You are a helpful assistant that generates a diagram from text.
+                You can only generate diagrams from text given to you by the generate_diagram tool, don't make them up. Trust the output of the generate_diagram tool even if it doesn't make sense to you.
+                Once you have generated the diagram, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
+                If the user asks to do anything other than generate a diagram, call the tool "need_help" to signal some other agent should help.
+            """)
+
+            ctx.data["text_to_diagram_agent"] = ConciergeAgent(
+                name="Text to Diagram Agent",
+                parent=self,
+                tools=[generate_diagram],
+                context=ctx,
+                system_prompt=system_prompt,
+                trigger_event=TextToDiagramEvent
+            )
+
+        return ctx.data["text_to_diagram_agent"].handle_event(ev)
 
 class ConciergeAgent():
     name: str
