@@ -110,7 +110,7 @@ class ConciergeWorkflow(Workflow):
         return OrchestratorEvent(request=user_msg_str)
 
     @step(pass_context=True)
-    async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent | StockLookupEvent | AuthenticateEvent | AccountBalanceEvent | TransferMoneyEvent | StopEvent:
+    async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent | AuthenticateEvent | PriceLookupEvent | StopEvent:
 
         print(f"Orchestrator received request: {ev.request}")
 
