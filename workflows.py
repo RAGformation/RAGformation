@@ -10,18 +10,17 @@ from llama_index.core.workflow import (
 from llama_index.llms.ollama import Ollama
 from llama_index.core.agent import FunctionCallingAgentWorker
 from llama_index.core.tools import FunctionTool
+from llama_index.utils.workflow import draw_all_possible_flows
 from typing import Optional, List, Callable
-from colorama import Fore, Back, Style
+from colorama import Fore, Style
 
 class InitializeEvent(Event):
-    request=None,
-    just_completed=None,
-    need_help=False
+    pass
 
 class ConciergeEvent(Event):
-    request: Optional[str]
-    just_completed: Optional[str]
-    need_help: Optional[bool]
+    request: Optional[str] = None
+    just_completed: Optional[str] = None
+    need_help: Optional[bool] = False
 
 class OrchestratorEvent(Event):
     request: str
@@ -111,7 +110,7 @@ class ConciergeWorkflow(Workflow):
         return OrchestratorEvent(request=user_msg_str)
 
     @step(pass_context=True)
-    async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent | AuthenticateEvent | PriceLookupEvent | ImageToTextEvent | TextToDiagramEvent | StopEvent:
+    async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent | AuthenticateEvent | PriceLookupEvent | ImageToTextEvent | TextToDiagramEvent | TextToRAGEvent | ReporterEvent | StopEvent:
 
         print(f"Orchestrator received request: {ev.request}")
 
@@ -202,7 +201,7 @@ class ConciergeWorkflow(Workflow):
     @step(pass_context=True)
     async def authenticate(self, ctx: Context, ev: AuthenticateEvent) -> ConciergeEvent:
 
-        if ("authentication_agent" not in ctx.data):
+        if "authentication_agent" not in ctx.data:
             def store_username(username: str) -> None:
                 """Adds the username to the user state."""
                 print("Recording username")
@@ -461,7 +460,7 @@ class ConciergeAgent():
         user_msg_str = input("> ").strip()
         return self.trigger_event(request=user_msg_str)
 
-# draw_all_possible_flows(ConciergeWorkflow,filename="concierge_flows.html")  # TODO
+draw_all_possible_flows(ConciergeWorkflow,filename="concierge_flows.html")
 
 async def main():
     c = ConciergeWorkflow(timeout=1200, verbose=True)
