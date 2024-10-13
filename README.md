@@ -60,9 +60,14 @@ Transformative Impact:
 Our mission is to future-proof your cloud journey, making complexity simple and possibilities limitless. Let's redefine what's possible in the cloud together.
 
 
+# What it does
 
+With RAGFormation, users can simplify cloud complexity and accelerate innovation effortlessly. By simply inputting their specific use case into our platform, users receive an optimal cloud service plan tailored to their needs. Utilizing Llama Index Workflows, RAGFormation generates a flow diagram that visually represents the suggested cloud services suited for their project.
 
-- What it does
+From this flow diagram, our platform provides detailed pricing information for the entire proposed cloud services setup. If users wish to refine the recommendations, RAGFormation adjusts the flow diagram based on their feedback, offering alternative services or configurations. Once the user confirms the optimized flow, the tool finalizes the pricing and generates a comprehensive report.
+
+Users are empowered to make informed decisions quickly, with visual representations and cost insights at their fingertips—transforming what was once a complex, time-consuming process into a seamless experience.
+
 - How we built it
 - Challenges we ran into
 - Accomplishments that we're proud of
