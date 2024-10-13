@@ -7,17 +7,18 @@ from llama_index.core.workflow import (
     StopEvent
 )
 
-LLM=None
-
 try:
     from llama_index.llms.azure_openai import AzureOpenAI
     LLM = "AzureOpenAI"
-except ImportError:
-    try:
-        from llama_index.llms.ollama import Ollama
-        LLM = "Ollama"
-    except ImportError:
-        print("Unable to find a LLM")
+except ImportError as e:
+    AzureOpenAI = None
+    print(e)
+try:
+    from llama_index.llms.ollama import Ollama
+    LLM = "Ollama"
+except ImportError as e:
+    Ollama = None
+    print(e)
 from llama_index.core.agent import FunctionCallingAgentWorker
 from llama_index.core.tools import FunctionTool
 from llama_index.utils.workflow import draw_all_possible_flows
@@ -66,11 +67,11 @@ class ConciergeWorkflow(Workflow):
         ctx.data["redirecting"] = None
         ctx.data["overall_request"] = None
 
-        if LLM == "AzureOpenAI":
+        if LLM == "AzureOpenAI" and callable(AzureOpenAI):
             ctx.data["llm"] = AzureOpenAI(
                 engine="testing-first-gbu-doc", model="gpt-4o", temperature=0.4
             )
-        elif LLM == "Ollama":
+        elif LLM == "Ollama" and callable(Ollama):
             ctx.data["llm"] = Ollama(model="llama3.1:8b", request_timeout=120.0)
 
         ctx.data["requirements"] = None
@@ -503,12 +504,14 @@ if __name__ == "__main__":
     import asyncio
     try:
         # If there's no running event loop, use asyncio.run()
-        loop = asyncio.get_event_loop()
-        if not loop.is_running():
+        if not asyncio.get_event_loop().is_running():
             asyncio.run(main())
         else:
-            # If an event loop is running, run the coroutine with ensure_future
-            asyncio.ensure_future(main())
+            # If an event loop is running, use await
+            try:
+                await main()
+            except Exception as e:
+                print(e)
     except RuntimeError:
         # For environments like Jupyter that may raise errors for nested event loops
         import nest_asyncio
