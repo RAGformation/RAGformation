@@ -2,7 +2,7 @@ try:
     import dotenv
     dotenv.load_dotenv()
 except ImportError:
-    pass
+    dotenv = None
 
 from llama_index.core.workflow import (
     step,
@@ -527,7 +527,7 @@ class ConciergeAgent:
         user_msg_str = input("> ").strip()
         return self.trigger_event(request=user_msg_str)
 
-draw_all_possible_flows(ConciergeWorkflow,filename="concierge_flows.html")
+draw_all_possible_flows(ConciergeWorkflow, filename="concierge_flows.html")
 
 async def main():
     c = ConciergeWorkflow(timeout=1200, verbose=True)
