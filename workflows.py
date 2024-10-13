@@ -291,7 +291,8 @@ class ConciergeWorkflow(Workflow):
                 You are a helpful assistant that is looking up service prices.
                 The user may not know the name of the service they're interested in,
                 so you can help them look it up by a description of what the service does or provides.
-                The user can only request a price lookup if they have provided requirements and confirmed the flow, which you can check with the has_requirements tool and the flow_confirmed tool.
+                The user can only request a price lookup if they have provided requirements, which you can check with the has_requirements tool.
+                The user can only request a price lookup if they have confirmed the flow, which you can check with the flow_confirmed tool.
                 You can only look up names given to you by the search_for_service tool, don't make them up. Trust the output of the search_for_service tool even if it doesn't make sense to you.
                 Once you have retrieved a price, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
                 If the user asks to do anything other than look up a service price, call the tool "need_help" to signal some other agent should help.
@@ -499,10 +500,6 @@ async def main():
     result = await c.run()
     print(result)
 
-async def await_main():
-    # Hack for Jupyter
-    await main()
-
 # Check if an event loop is already running
 if __name__ == "__main__":
     import asyncio
@@ -513,7 +510,8 @@ if __name__ == "__main__":
         else:
             # If an event loop is running, use await
             try:
-                await_main()
+                # await main()  # For Jupyter uncomment this
+                pass
             except Exception as e:
                 print(e)
     except RuntimeError:
