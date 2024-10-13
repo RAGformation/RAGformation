@@ -104,8 +104,18 @@ Users are empowered to make informed decisions quickly, with visual representati
    - Providing a PDF version of the flow diagram, pricing, and details of the confirmed suggested flow.
    - The app outputs a suggested optimal list of cloud services with pricing and the cloud flow in a PDF report.
 
-- Challenges we ran into
-- Accomplishments that we're proud of
+# Challenges we ran into
+
+- LLama workflow integration with agents
+- Box upload and retrieval in Llama cloud
+- Diagram generation with cloud services imports
+- Dynamic parameters for Pricing API needed by cloud services
+- Connecting react to llama workflow
+
+# Accomplishments That We're Proud Of
+
+We are proud to have created **RAGFormation**, an application that makes selecting and optimizing cloud services much easier and faster. By simplifying cloud complexity, we've empowered businesses to accelerate innovation without getting bogged down in the intricacies of cloud architecture. Our tool helps organizations quickly design tailored cloud solutions, optimize costs, and stay agile in a rapidly evolving tech landscape. We believe RAGFormation will enable companies to focus more on driving growth and delivering value, rather than navigating the often daunting world of cloud services.
+
 - What we learned
 - What's next for <Winning Project>
 
