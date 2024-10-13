@@ -293,7 +293,7 @@ class ConciergeWorkflow(Workflow):
         print(f"Price Lookup received request: {ev.request}")
         self.log_history(ctx, "price_lookup", "user", ev.request)
 
-        if ("price_lookup_agent" not in ctx.data):
+        if "price_lookup_agent" not in ctx.data:
             def lookup_price(name: str) -> str:
                 """Useful for looking the price of a service."""
                 print(f"Looking up price for {name} service")
@@ -321,9 +321,9 @@ class ConciergeWorkflow(Workflow):
                 You are a helpful assistant that is looking up service prices.
                 The user may not know the name of the service they're interested in,
                 so you can help them look it up by a description of what the service does or provides.
+                You can only look up names given to you by the search_for_service tool, don't make them up. Trust the output of the search_for_service tool even if it doesn't make sense to you.
                 The user can only request a price lookup if they have provided requirements, which you can check with the has_requirements tool.
                 The user can only request a price lookup if they have confirmed the flow, which you can check with the flow_confirmed tool.
-                You can only look up names given to you by the search_for_service tool, don't make them up. Trust the output of the search_for_service tool even if it doesn't make sense to you.
                 Once you have retrieved a price, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
                 If the user asks to do anything other than look up a service price, call the tool "need_help" to signal some other agent should help.
             """)
@@ -345,7 +345,7 @@ class ConciergeWorkflow(Workflow):
         print(f"Image to Text received request: {ev.request}")
         self.log_history(ctx, "image_to_text", "user", ev.request)
 
-        if ("image_to_text_agent" not in ctx.data):
+        if "image_to_text_agent" not in ctx.data:
             def extract_text(image: str) -> str:
                 """Useful for extracting text from an image."""
                 print(f"Extracting text from image {image}")
@@ -375,7 +375,7 @@ class ConciergeWorkflow(Workflow):
         print(f"Text to Diagram received request: {ev.request}")
         self.log_history(ctx, "text_to_diagram", "user", ev.request)
 
-        if ("text_to_diagram_agent" not in ctx.data):
+        if "text_to_diagram_agent" not in ctx.data:
             def generate_diagram(text: str) -> str:
                 """Useful for describing a diagram using text."""
                 print(f"Generating diagram from text {text}")
@@ -405,7 +405,7 @@ class ConciergeWorkflow(Workflow):
         print(f"Text to RAG received request: {ev.request}")
         self.log_history(ctx, "text_to_rag", "user", ev.request)
 
-        if ("text_to_rag_agent" not in ctx.data):
+        if "text_to_rag_agent" not in ctx.data:
             def search_rag(text: str) -> str:
                 """Useful for requesting a RAG search using text."""
                 print(f"Performing a search from text {text}")
@@ -435,7 +435,7 @@ class ConciergeWorkflow(Workflow):
         print(f"Report received request: {ev.request}")
         self.log_history(ctx, "report", "user", ev.request)
 
-        if ("report_agent" not in ctx.data):
+        if "report_agent" not in ctx.data:
             def report() -> str:
                 """Useful for generating a report."""
                 print(f"Generating report from text")
@@ -459,7 +459,7 @@ class ConciergeWorkflow(Workflow):
 
         return ctx.data["report_agent"].handle_event(ev)
 
-class ConciergeAgent():
+class ConciergeAgent:
     name: str
     parent: Workflow
     tools: list[FunctionTool]
