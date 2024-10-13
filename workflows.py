@@ -1,8 +1,24 @@
+import os
+
+def load_env_file(file_path=".env"):
+    try:
+        with open(file_path) as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith("#"):
+                    key, value = line.split("=", 1)
+                    os.environ[key.strip()] = value.strip()
+    except FileNotFoundError:
+        print(f"Error: The file '{file_path}' does not exist.")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
 try:
     import dotenv
     dotenv.load_dotenv()
 except ImportError:
     dotenv = None
+    load_env_file()
 
 from llama_index.core.workflow import (
     step,
@@ -13,23 +29,55 @@ from llama_index.core.workflow import (
     StopEvent
 )
 
-try:
-    from llama_index.llms.azure_openai import AzureOpenAI
-    LLM = "AzureOpenAI"
-except ImportError as e:
-    AzureOpenAI = None
-    print(e)
-try:
-    from llama_index.llms.ollama import Ollama
-    LLM = "Ollama"
-except ImportError as e:
-    Ollama = None
-    print(e)
+LLM = None
+OpenAI = None
+AzureOpenAI = None
+Anthropic = None
+Ollama = None
+
+if LLM is None:
+    try:
+        from llama_index.llms.openai import OpenAI
+        LLM = "OpenAI"
+    except ImportError as e:
+        print(e)
+
+if LLM is None:
+    try:
+        from llama_index.llms.anthropic import Anthropic
+        LLM = "Anthropic"
+    except ImportError as e:
+        Anthropic = None
+        print(e)
+
+if LLM is None:
+    try:
+        from llama_index.llms.azure_openai import AzureOpenAI
+        LLM = "AzureOpenAI"
+    except ImportError as e:
+        AzureOpenAI = None
+        print(e)
+
+if LLM is None:
+    try:
+        from llama_index.llms.ollama import Ollama
+        LLM = "Ollama"
+    except ImportError as e:
+        Ollama = None
+        print(e)
+
 from llama_index.core.agent import FunctionCallingAgentWorker
 from llama_index.core.tools import FunctionTool
 from llama_index.utils.workflow import draw_all_possible_flows
 from typing import Optional, List, Callable
 from colorama import Fore, Style
+
+try:
+    from version2textToImage import text_to_diagram
+except (ImportError, TypeError):
+    text_to_diagram = None
+from pricingAgent import get_price_for_service
+from ragEndpoint import call_rag_endpoint
 
 class InitializeEvent(Event):
     pass
@@ -70,10 +118,32 @@ class ConciergeWorkflow(Workflow):
     def log_history(ctx: Context, agent, role, content):
         # TODO: log system prompts (on first call)
         # TODO: log assistant responses
-        ctx.data[agent].append({
-            "role": role,
-            "content": content,
-        })
+        # TODO: convert to get/set format
+        # TODO: log anything at all
+        return
+        # Version 0.10
+        # ctx.data[set]agent].append({
+        #     "role": role,
+        #     "content": content,
+        # })
+        # Version 0.11
+        # # Retrieve the data from ctx
+        # data = ctx.get('data', {})
+        #
+        # # Get the list for the agent or initialize as an empty list if not present
+        # agent_data = data.get(agent, [])
+        #
+        # # Append the new data
+        # agent_data.append({
+        #     "role": role,
+        #     "content": content,
+        # })
+        #
+        # # Put the updated list back into the data
+        # data[agent] = agent_data
+        #
+        # # Set the updated data back into ctx
+        # ctx.set('data', data)
 
     @step(pass_context=True)
     async def initialize(self, ctx: Context, ev: InitializeEvent) -> ConciergeEvent:
@@ -97,12 +167,18 @@ class ConciergeWorkflow(Workflow):
         ctx.data["requirements"] = None
         ctx.data["flow_confirmed"] = False
 
+        if LLM == "OpenAI" and callable(OpenAI):
+            ctx.data["llm"] = OpenAI(model="gpt-4o",temperature=0.4)
         if LLM == "AzureOpenAI" and callable(AzureOpenAI):
             ctx.data["llm"] = AzureOpenAI(
                 engine="testing-first-gbu-doc", model="gpt-4o", temperature=0.4
             )
-        elif LLM == "Ollama" and callable(Ollama):
+        if LLM == "Anthropic" and callable(Anthropic):
+            ctx.data["llm"] = Anthropic(model="claude-3-5-sonnet-20240620",temperature=0.4)
+        if LLM == "Ollama" and callable(Ollama):
             ctx.data["llm"] = Ollama(model="llama3.1:8b", request_timeout=120.0)
+            # ctx.data["llm"] = Ollama(model="llama3.2:3b", request_timeout=120.0)
+        print("LLM loaded: %s" % LLM)
 
         return ConciergeEvent()
 
@@ -115,16 +191,28 @@ class ConciergeWorkflow(Workflow):
         # initialize concierge if not already done
         if "concierge" not in ctx.data:
             system_prompt = (f"""
-                You are a helpful assistant that is helping a user navigate an automatic system diagram reporter.
-                Your job is to ask the user questions to figure out what they want to do, and give them the available things they can do.
-                That includes
-                * authenticating the user
-                * describe the requirements to the system for lookup
-                * looking up the price of a service     
-                * receiving the description of a system
-                * draw a diagram from a description
-                * generate a report
-                You should start by listing the things you can help them do.            
+                You are a helpful assistant that is helping a user navigate an automatic system AWS diagram generator, reporter and pricing.
+
+                Behavioral Guidelines:
+                - Be proactive: Suggest actions or steps that can improve efficiency or correctness.
+                - Be transparent: Clearly explain each decision and the results of executed actions. If an action fails, explain why and attempt a fallback solution.
+                - Be adaptive: Modify your behavior based on feedback from the environment or user instructions.
+                - Be polite and helpful: Always maintain a helpful tone and seek the best possible outcomes for the user.
+                - Be concise and clear: Use simple and concise language to avoid unnecessary details and confusion.
+                Tools at Your Disposal:
+                - price lookup
+                - image to text
+                - text to diagram
+                - text to rag
+                - reporter
+                Your job is to ask the user questions to figure out what they want to do, and start by listing the things you can help them do:
+                - Requirement gathering
+                - Flow confirmation
+                - Flow enhancement
+                - Price lookup
+                - Final report of selected flow 
+
+                Then use the respective tool to fulfill the user's request.            
             """)
 
             agent_worker = FunctionCallingAgentWorker.from_tools(
@@ -219,13 +307,36 @@ class ConciergeWorkflow(Workflow):
         ]
 
         system_prompt = (f"""
-            You are on orchestration agent.
-            Your job is to decide which agent to run based on the current state of the user and what they've asked to do. 
-            You run an agent by calling the appropriate tool for that agent.
-            You do not need to call more than one tool.
-            You do not need to figure out dependencies between agents; the agents will handle that themselves.
+            You are an advanced orchestrating agent designed to manage and optimize the execution of multiple subtasks within a complex workflow for AWS diagram generator, reporter and pricing. Your primary role is to coordinate between various tools, services, and APIs to ensure tasks are completed efficiently and accurately.
+            Core responsibilities:
+            - **Task delegation**: Assign each user request to the correct agent by calling the appropriate tool.
+            - **Efficiency**: Ensure that you call only **one tool at a time**, allowing agents to handle their respective dependencies.
+            - **Precision**: Match the user’s request with the right agent without making redundant calls.
+            - **Fail-safe**: If no tools are called, return the string "FAILED" without quotes and nothing else. This will signal that no matching agents were found for the request.
+            - **No Dependency Resolution**: You do not need to handle or figure out dependencies between agents; each agent will manage its own dependencies and outputs.
+
+            Behavioral Guidelines:
+            - **Efficiency**: Make quick and accurate decisions about which agent to call based on the user's input. Avoid redundant calls or multiple agent invocations for a single task.
+            - **Clarity**: Provide clear responses or actions based on the user’s input.
+            - **Accuracy**: Always select the most appropriate agent based on the request. If the request is ambiguous or cannot be understood, return "FAILED."
+            - **No Overlap**: Each task should be handled by exactly one agent. If the task is outside your scope or the agents available, return "FAILED."
+            
+            Tools at your disposal:
+            - **Price Lookup Agent**: For checking the price of a service.
+            - **Image to Text Agent**: For extracting text from an image.
+            - **Text to Diagram Agent**: For converting text descriptions into a diagram.
+            - **Text to RAG Agent**: For performing Retrieval-Augmented Generation (RAG) searches using text.
+            - **Report Generation Agent**: For generating a report of the finalized flow.
+            - **Concierge Agent**: For handling any other requests or questions not covered by the other agents.
                             
             If you did not call any tools, return the string "FAILED" without quotes and nothing else.
+            ### Decision Process:
+            - Listen carefully to the user's request.
+            - Based on the request, call the most suitable agent from the list above.
+            - Do not attempt to resolve dependencies between agents; agents will handle their own logic.
+            - If no suitable agent can be found for the user's request, respond with "FAILED."
+
+            Ensure that your decisions are efficient and accurate to maintain a smooth workflow. Your goal is to streamline task execution without unnecessary steps.
         """)
 
         agent_worker = FunctionCallingAgentWorker.from_tools(
@@ -291,12 +402,16 @@ class ConciergeWorkflow(Workflow):
     async def price_lookup(self, ctx: Context, ev: PriceLookupEvent) -> ConciergeEvent:
 
         print(f"Price Lookup received request: {ev.request}")
-        self.log_history(ctx, "price_lookup", "user", ev.request)
+        #self.log_history(ctx, "price_lookup", "user", ev.request)
 
         if "price_lookup_agent" not in ctx.data:
             def lookup_price(name: str) -> str:
                 """Useful for looking the price of a service."""
                 print(f"Looking up price for {name} service")
+
+                # Call the pricingAgent.py to get the price of the service
+                get_price_for_service(name)
+
                 return f"Service {name} currently costs $100.00"
 
             def search_for_service(name: str) -> str:
@@ -319,12 +434,12 @@ class ConciergeWorkflow(Workflow):
 
             system_prompt = (f"""
                 You are a helpful assistant that is looking up service prices.
+                The user can only request a price lookup if they have provided requirements, which you can check with the has_requirements tool.
+                The user can only request a price lookup if they have confirmed the flow, which you can check with the has_requirement.
                 The user may not know the name of the service they're interested in,
                 so you can help them look it up by a description of what the service does or provides.
                 You can only look up names given to you by the search_for_service tool, don't make them up. Trust the output of the search_for_service tool even if it doesn't make sense to you.
-                The user can only request a price lookup if they have provided requirements, which you can check with the has_requirements tool.
-                The user can only request a price lookup if they have confirmed the flow, which you can check with the flow_confirmed tool.
-                Once you have retrieved a price, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
+                Once you have retrieved a price, you must call the tool named "done" to signal that you are done. Do this before you respond.
                 If the user asks to do anything other than look up a service price, call the tool "need_help" to signal some other agent should help.
             """)
 
@@ -352,7 +467,9 @@ class ConciergeWorkflow(Workflow):
                 return f"Image {image} contains Lorem ipsum dolor sit amet"
 
             system_prompt = (f"""
-                You are a helpful assistant that extracts text from an image.
+                You are a helpful assistant that extracts text from image given as an input.
+                Text extracted from the attached image is then sent to the text_to_rag tool for further processing.
+                This function emits an event to trigger the text extraction process from the provided image.
                 You can only extract text from images given to you by the extract_text tool, don't make them up. Trust the output of the extract_text tool even if it doesn't make sense to you.
                 Once you have extracted the text, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
                 If the user asks to do anything other than extract text from an image, call the tool "need_help" to signal some other agent should help.
@@ -379,6 +496,7 @@ class ConciergeWorkflow(Workflow):
             def generate_diagram(text: str) -> str:
                 """Useful for describing a diagram using text."""
                 print(f"Generating diagram from text {text}")
+                text_to_diagram(text)
                 return f"{text} generated a diagram"
 
             system_prompt = (f"""
@@ -409,7 +527,10 @@ class ConciergeWorkflow(Workflow):
             def search_rag(text: str) -> str:
                 """Useful for requesting a RAG search using text."""
                 print(f"Performing a search from text {text}")
-                return f"{text} generated results"
+
+                response = call_rag_endpoint(text)
+
+                return f"{response.get('result', 'No results found')} generated results"
 
             system_prompt = (f"""
                 You are a helpful assistant that perform RAG searches from text.
