@@ -13,6 +13,9 @@ from llama_index.core.workflow import (
     StopEvent
 )
 
+# Add the new import for your RAG endpoint
+from rag_endpoint import call_rag_endpoint
+
 try:
     from llama_index.llms.azure_openai import AzureOpenAI
     LLM = "AzureOpenAI"
@@ -408,7 +411,15 @@ class ConciergeWorkflow(Workflow):
         if "text_to_rag_agent" not in ctx.data:
             def search_rag(text: str) -> str:
                 """Useful for requesting a RAG search using text."""
-                print(f"Performing a search from text {text}")
+                print(f"Performing a search from text: {text}")
+
+                # Call the RAG endpoint with the captured query
+                response = call_rag_endpoint(text)
+
+                # Process the response from the RAG endpoint and return a result
+                return f"{response.get('result', 'No results found')} generated results"
+
+
                 return f"{text} generated results"
 
             system_prompt = (f"""
