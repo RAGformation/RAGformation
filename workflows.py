@@ -498,6 +498,17 @@ async def main():
     result = await c.run()
     print(result)
 
+# Check if an event loop is already running
 if __name__ == "__main__":
     import asyncio
-    asyncio.run(main())
+    try:
+        # If there's no running event loop, use asyncio.run()
+        if not asyncio.get_event_loop().is_running():
+            asyncio.run(main())
+        else:
+            asyncio.ensure_future(main())
+    except RuntimeError:
+        # For environments like Jupyter that may raise errors for nested event loops
+        import nest_asyncio
+        nest_asyncio.apply()
+        asyncio.run(main())
