@@ -33,11 +33,11 @@ While our architecture is designed to handle the “big three” cloud giants, i
 
 The impact is transformative:
 
-Accelerate Time-to-Deployment: Bypass the traditional delays. Get your tech teams building faster than ever before.
-Empower Leadership Decisions: Access immediate, detailed cost reports and architecture visuals. Make strategic choices with confidence and clarity.
-Optimize ROI: Custom recommendations mean no more over-provisioning or under-utilizing resources. Every dollar is maximized for efficiency and effectiveness.
-Stay Agile and Competitive: By automating cloud service selection and cost estimation, your business can respond rapidly to changing needs, without missing a beat.
-Imagine reducing a process that typically stretches over weeks into a streamlined workflow completed in hours. Imagine the agility, the competitive edge, and the innovation unleashed. That’s not just efficiency—that’s a game-changer.
+- Accelerate Time-to-Deployment: Bypass the traditional delays. Get your tech teams building faster than ever before.
+- Empower Leadership Decisions: Access immediate, detailed cost reports and architecture visuals. Make strategic choices with confidence and clarity.
+- Optimize ROI: Custom recommendations mean no more over-provisioning or under-utilizing resources. Every dollar is maximized for efficiency and effectiveness.
+- Stay Agile and Competitive: By automating cloud service selection and cost estimation, your business can respond rapidly to changing needs, without missing a beat.
+- Imagine reducing a process that typically stretches over weeks into a streamlined workflow completed in hours. Imagine the agility, the competitive edge, and the innovation     unleashed. That’s not just efficiency—that’s a game-changer.
 
 Our mission is to future-proof your cloud journey—whether you're optimizing across AWS, Azure, Google Cloud, or exploring alternative providers that align with your unique business needs. We ensure that your cloud architecture remains adaptable, cost-efficient, and at the forefront of technological innovation.
 
