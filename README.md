@@ -7,16 +7,16 @@
 - RAGFormation
 
 ## Elevator pitch (short sentence)
-- (?)
+- Tailored cloud solutions based on use case, cost, and preferences using Agentic AI to research, design, diagram, and report an optimized result.
 
 ## Built with
 - LlamaIndex
 - Pinecone
-- VesslAI
+- Together.ai
 - box
 - LlamaCloud
+- Python
 - React
-- Together.ai
 
 # About the Project
 
@@ -135,11 +135,3 @@ While we've made significant strides with RAGFormation in simplifying cloud comp
 - **Real-Time Collaboration Tools:** Introducing collaboration features will enable teams to work together within RAGFormation, making it easier to coordinate on cloud architecture decisions and share insights instantly.
 
 Our commitment is to continuously evolve RAGFormation to meet the growing and changing needs of businesses. By focusing on these improvements, we aim to make cloud optimization not just easier, but a catalyst for innovation and growth.
-## Media
-- Image gallery
-- Video demo
-- "Try it out" links
-
-## License
-- (?)
-
