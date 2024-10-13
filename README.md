@@ -1,20 +1,20 @@
 # RAGformation
 
-## Team name:
+## Team name
 - RAGtoRiches
 
-## Project name:
+## Project name
 - RAGFormation
 
-## Elevator pitch (short sentence):
+## Elevator pitch (short sentence)
 - (?)
 
-## Built with:
+## Built with
 - LlamaIndex
 - Pinecone
 - VesslAI
 
-## About the Project:
+## About the Project
 - Inspiration
 - What it does
 - How we built it
@@ -23,7 +23,7 @@
 - What we learned
 - What's next for <Winning Project>
 
-## Media:
+## Media
 - Image gallery
 - Video demo
 - "Try it out" links
