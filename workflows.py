@@ -503,9 +503,11 @@ if __name__ == "__main__":
     import asyncio
     try:
         # If there's no running event loop, use asyncio.run()
-        if not asyncio.get_event_loop().is_running():
+        loop = asyncio.get_event_loop()
+        if not loop.is_running():
             asyncio.run(main())
         else:
+            # If an event loop is running, run the coroutine with ensure_future
             asyncio.ensure_future(main())
     except RuntimeError:
         # For environments like Jupyter that may raise errors for nested event loops
