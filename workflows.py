@@ -499,6 +499,10 @@ async def main():
     result = await c.run()
     print(result)
 
+async def await_main():
+    # Hack for Jupyter
+    await main()
+
 # Check if an event loop is already running
 if __name__ == "__main__":
     import asyncio
@@ -509,7 +513,7 @@ if __name__ == "__main__":
         else:
             # If an event loop is running, use await
             try:
-                await main()
+                await_main()
             except Exception as e:
                 print(e)
     except RuntimeError:
