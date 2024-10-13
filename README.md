@@ -1,7 +1,9 @@
 # RAGformation
 
-## Project name:
+## Team name:
+- RAGtoRiches
 
+## Project name:
 - RAGFormation
 
 ## Elevator pitch (short sentence):
