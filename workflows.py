@@ -1,3 +1,9 @@
+try:
+    import dotenv
+    dotenv.load_dotenv()
+except ImportError:
+    pass
+
 from llama_index.core.workflow import (
     step,
     Context,
@@ -54,7 +60,20 @@ class TextToRAGEvent(Event):
 class ReporterEvent(Event):
     request: str
 
+class Message:
+    role: str = None
+    content: Optional[str] = None
+
 class ConciergeWorkflow(Workflow):
+
+    @staticmethod
+    def log_history(ctx: Context, agent, role, content):
+        # TODO: log system prompts (on first call)
+        # TODO: log assistant responses
+        ctx.data[agent].append({
+            "role": role,
+            "content": content,
+        })
 
     @step(pass_context=True)
     async def initialize(self, ctx: Context, ev: InitializeEvent) -> ConciergeEvent:
@@ -67,15 +86,23 @@ class ConciergeWorkflow(Workflow):
         ctx.data["redirecting"] = None
         ctx.data["overall_request"] = None
 
+        ctx.data["history"]: dict[str, List[Message]] = {
+            "authenticate": [],
+            "price_lookup": [],
+            "image_to_text": [],
+            "text_to_diagram": [],
+            "text_to_rag": [],
+            "report": [],
+        }
+        ctx.data["requirements"] = None
+        ctx.data["flow_confirmed"] = False
+
         if LLM == "AzureOpenAI" and callable(AzureOpenAI):
             ctx.data["llm"] = AzureOpenAI(
                 engine="testing-first-gbu-doc", model="gpt-4o", temperature=0.4
             )
         elif LLM == "Ollama" and callable(Ollama):
             ctx.data["llm"] = Ollama(model="llama3.1:8b", request_timeout=120.0)
-
-        ctx.data["requirements"] = None
-        ctx.data["flow_confirmed"] = False
 
         return ConciergeEvent()
 
@@ -219,6 +246,8 @@ class ConciergeWorkflow(Workflow):
     @step(pass_context=True)
     async def authenticate(self, ctx: Context, ev: AuthenticateEvent) -> ConciergeEvent:
 
+        self.log_history(ctx, "authenticate", "user", ev.request)
+
         if "authentication_agent" not in ctx.data:
             def store_username(username: str) -> None:
                 """Adds the username to the user state."""
@@ -262,6 +291,7 @@ class ConciergeWorkflow(Workflow):
     async def price_lookup(self, ctx: Context, ev: PriceLookupEvent) -> ConciergeEvent:
 
         print(f"Price Lookup received request: {ev.request}")
+        self.log_history(ctx, "price_lookup", "user", ev.request)
 
         if ("price_lookup_agent" not in ctx.data):
             def lookup_price(name: str) -> str:
@@ -313,6 +343,7 @@ class ConciergeWorkflow(Workflow):
     async def image_to_text(self, ctx: Context, ev: ImageToTextEvent) -> ConciergeEvent:
 
         print(f"Image to Text received request: {ev.request}")
+        self.log_history(ctx, "image_to_text", "user", ev.request)
 
         if ("image_to_text_agent" not in ctx.data):
             def extract_text(image: str) -> str:
@@ -342,6 +373,7 @@ class ConciergeWorkflow(Workflow):
     async def text_to_diagram(self, ctx: Context, ev: TextToDiagramEvent) -> ConciergeEvent:
 
         print(f"Text to Diagram received request: {ev.request}")
+        self.log_history(ctx, "text_to_diagram", "user", ev.request)
 
         if ("text_to_diagram_agent" not in ctx.data):
             def generate_diagram(text: str) -> str:
@@ -371,6 +403,7 @@ class ConciergeWorkflow(Workflow):
     async def text_to_rag(self, ctx: Context, ev: TextToRAGEvent) -> ConciergeEvent:
 
         print(f"Text to RAG received request: {ev.request}")
+        self.log_history(ctx, "text_to_rag", "user", ev.request)
 
         if ("text_to_rag_agent" not in ctx.data):
             def search_rag(text: str) -> str:
@@ -400,6 +433,7 @@ class ConciergeWorkflow(Workflow):
     async def report(self, ctx: Context, ev: ReporterEvent) -> ConciergeEvent:
 
         print(f"Report received request: {ev.request}")
+        self.log_history(ctx, "report", "user", ev.request)
 
         if ("report_agent" not in ctx.data):
             def report() -> str:
