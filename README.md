@@ -68,7 +68,42 @@ From this flow diagram, our platform provides detailed pricing information for t
 
 Users are empowered to make informed decisions quickly, with visual representations and cost insights at their fingertips—transforming what was once a complex, time-consuming process into a seamless experience.
 
-- How we built it
+# How we built it
+
+
+**How We Built It**
+
+1. **User Interaction:**
+   - The user inputs a use case and confirms the suggested cloud services flow.
+   - Use case information and flow confirmation are collected.
+   - The user's budget is used to inform the overall project cost.
+
+2. **Data Collection:**
+   - Scraping data from the web for solutioning and pricing.
+   - Sources include blog posts, IEEE papers, and cloud services documentation.
+   - Utilizing pricing APIs.
+   - Importing diagram functions for building flow diagrams.
+
+3. **Technical Implementation:**
+   - Implementing a Llama Cloud and Pinecone RAG (Retrieval-Augmented Generation) solution for service suggestion and flow building.
+   - Using LlamaCloud-hosted Pinecone and Box.
+   - Box is used to store all the web-scraped data.
+   - Creating a vectorized knowledge base for RAG pipelines using Pinecone.
+
+4. **Agent Process:**
+   - An orchestrator works with agents to accomplish tasks.
+   - Collecting requirements from the user.
+   - RAG retrieves cloud services information and diagram imports.
+   - Interpreting suggested services to build flow diagrams.
+   - Iteratively enhancing and generating cloud flow diagrams.
+   - Estimating the price for the suggested cloud flow.
+   - Generating a report of the confirmed flow with pricing.
+
+5. **Output Generation:**
+   - Outputting the generated report from the agent process.
+   - Providing a PDF version of the flow diagram, pricing, and details of the confirmed suggested flow.
+   - The app outputs a suggested optimal list of cloud services with pricing and the cloud flow in a PDF report.
+
 - Challenges we ran into
 - Accomplishments that we're proud of
 - What we learned
