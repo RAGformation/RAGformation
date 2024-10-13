@@ -27,3 +27,7 @@
 - Image gallery
 - Video demo
 - "Try it out" links
+
+## License
+- (?)
+
