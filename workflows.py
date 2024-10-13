@@ -300,6 +300,10 @@ class ConciergeWorkflow(Workflow):
             def lookup_price(name: str) -> str:
                 """Useful for looking the price of a service."""
                 print(f"Looking up price for {name} service")
+
+
+
+
                 return f"Service {name} currently costs $100.00"
 
             def search_for_service(name: str) -> str:
@@ -418,9 +422,8 @@ class ConciergeWorkflow(Workflow):
 
                 # Process the response from the RAG endpoint and return a result
                 return f"{response.get('result', 'No results found')} generated results"
-
-
-                return f"{text} generated results"
+            
+                # return f"{text} generated results"
 
             system_prompt = (f"""
                 You are a helpful assistant that perform RAG searches from text.
