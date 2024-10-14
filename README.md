@@ -1,19 +1,18 @@
 # RAGFormation
 
-## Team name
-- RAGtoRiches
-
 ## Project name
 - RAGFormation
 
-## Elevator pitch (short sentence)
-- Tailored cloud solutions based on use case, cost, and preferences using Agentic AI to research, design, diagram, and report an optimized result.
+## Problem Statement
+- Enterprises have a tough time estimating how much cloud infrastructure will cost, and how it will look like?
+
+## Proposel Solution
+- Tailored cloud solutions based on use case, cost, and preferences using natural language with Agentic AI to research, design, price, diagram, and report an optimized result.
 
 ## Built with
 - LlamaIndex
 - Pinecone
-- Together.ai
-- box
+- Box
 - LlamaCloud
 - Python
 - React
@@ -42,23 +41,6 @@ The impact is transformative:
 Our mission is to future-proof your cloud journey—whether you're optimizing across AWS, Azure, Google Cloud, or exploring alternative providers that align with your unique business needs. We ensure that your cloud architecture remains adaptable, cost-efficient, and at the forefront of technological innovation.
 
 Step into the future of cloud infrastructure with us, where complexity becomes simplicity, and possibilities become realities. Let’s not just adopt the cloud—let’s redefine what’s possible within it.
-## Option2
-
-In today's fast-paced business world, navigating the maze of cloud services can slow down innovation. Selecting the right cloud infrastructure—be it AWS, Azure, Google Cloud, or specialized providers—often takes weeks of analysis, delaying progress and impacting competitiveness.
-
-We've transformed this complex process into an automated solution that delivers customized service recommendations, real-time pricing, and dynamic architecture diagrams in just hours. Our platform empowers you to tailor cloud components to your needs, stay updated with industry trends, and make informed decisions quickly.
-
-By supporting multiple cloud providers and guiding businesses toward the most efficient and cost-effective solutions—including vertically integrated services—we help you maximize value and stay agile in a rapidly evolving tech landscape.
-
-Transformative Impact:
-
-- Faster Deployment: Reduce planning time from weeks to hours, accelerating your time-to-market.
-- Informed Decisions: Access immediate cost reports and architecture visuals for confident leadership choices.
-- Optimized ROI: Ensure efficient use of cloud resources with custom recommendations.
-- Enhanced Agility: Respond rapidly to changing needs with automated service selection and cost estimation.
-  
-Our mission is to future-proof your cloud journey, making complexity simple and possibilities limitless. Let's redefine what's possible in the cloud together.
-
 
 # What it does
 
@@ -69,9 +51,6 @@ From this flow diagram, our platform provides detailed pricing information for t
 Users are empowered to make informed decisions quickly, with visual representations and cost insights at their fingertips—transforming what was once a complex, time-consuming process into a seamless experience.
 
 # How we built it
-
-
-**How We Built It**
 
 1. **User Interaction:**
    - The user inputs a use case and confirms the suggested cloud services flow.
