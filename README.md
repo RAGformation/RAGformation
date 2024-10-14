@@ -6,7 +6,7 @@
 ## Problem Statement
 - Enterprises have a tough time estimating how much cloud infrastructure will cost, and how it will look like?
 
-## Proposel Solution
+## Solution
 - Tailored cloud solutions based on use case, cost, and preferences using natural language with Agentic AI to research, design, price, diagram, and report an optimized result.
 
 ## Built with
