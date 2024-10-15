@@ -1,3 +1,10 @@
+🚧 Repository Restructuring in Progress 🚧
+
+We wanted to give you a heads-up that this repository is currently undergoing some restructuring to improve organization, maintainability, and scalability. 
+
+![image](https://github.com/user-attachments/assets/8ca1109e-6929-437b-a1b3-871ed6d7b030)
+
+
 # RAGFormation
 
 ## Project name
