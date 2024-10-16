@@ -194,20 +194,15 @@ class ConciergeWorkflow(Workflow):
 
         1. Requirements Enhancement:
         - Receive initial requirements from users
-        - Utilize the text_to_rag tool to generate improved requirement recommendations
+        - Use the text_to_rag tool to refine and enhance the requirements. If the tool indicates that the requirements are complete, proceed directly to generating the architecture diagram.
         - Present enhanced requirements to users for approval or further refinement
 
         2. Diagram Generation:
         - Forward approved requirements to the text_to_diagram tool
         - Generate diagrams based on the provided requirements
         - Present the resulting diagrams to users
-
-        Your primary functions are to:
-        - Analyze and enhance project requirements
-        - Facilitate the creation of visual representations of those requirements
-        - Coordinate between user input and specialized tools to improve project outcomes
         
-        You run an agent by calling the appropriate tool for that agent.
+        You can run an agent by calling the appropriate tool for that agent.
         You do not need to call more than one tool.
         You do not need to figure out dependencies between agents; the agents will handle that themselves.
                         
@@ -326,10 +321,10 @@ class ConciergeWorkflow(Workflow):
                 return "Output diagram saved to output_diagram.png"
 
             system_prompt = (f"""
-                You are a helpful assistant that generates a diagram from text.
-                You can only generate diagrams from text given to you by the generate_diagram tool, don't make them up. Trust the output of the generate_diagram tool even if it doesn't make sense to you.
+                You are a helpful aws assistant that generates architecture diagram from text.
+                You can only generate diagrams from text given to you by the orchestrator, don't make them up. Trust the output of the generate_diagram tool even if it doesn't make sense to you.
                 Once you have generated the diagram, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
-                If the user asks to do anything other than generate a diagram, call the tool "need_help" to signal some other agent should help.
+                If the orchestrator asks to do anything other than generate a diagram, call the tool "need_help" to signal some other agent should help.
             """)
 
             ctx.data["text_to_diagram_agent"] = ConciergeAgent(
