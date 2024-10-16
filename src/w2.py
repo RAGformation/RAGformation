@@ -12,7 +12,7 @@ from llama_index.agent.openai import OpenAIAgent
 
 from agent_scripts import text_to_diagram as draw_text_to_diagram
 
-from events import InitializeEvent, ConciergeEvent, OrchestratorEvent, PriceLookupEvent, ImageToTextEvent, TextToDiagramEvent, TextToRAGEvent, ReporterEvent
+from events import InitializeEvent, ConciergeEvent, OrchestratorEvent, PriceLookupEvent, ImageToTextEvent, TextToDiagramEvent, TextToRAGEvent, ReporterEvent, SyntaxCheckEvent, ArchitectureCheckEvent
 
 import dotenv
 dotenv.load_dotenv()
@@ -33,7 +33,7 @@ def initialize_llm(llm_type: str):
         "Ollama": lambda: Ollama(model="llama3.1:8b", request_timeout=120.0),
         "OpenAI": lambda:  OpenAI(model="gpt-4o",temperature=0.8),
         "Anthropic": lambda: Anthropic(model="claude-3-opus-20240229", temperature=0.4),
-        "Groq": lambda: Groq(model="llama-3.1-70b-versatile", temperature=0.4),
+        "Groq": lambda: Groq(model="llama3-70b-8192", temperature=0.8),
     }
     return llm_map.get(llm_type, lambda: None)()
 
@@ -56,7 +56,7 @@ class ConciergeWorkflow(Workflow):
             "success": None,
             "redirecting": None,
             "overall_request": None,
-            "history": {agent: [] for agent in ["image_to_text", "text_to_diagram", "text_to_rag", "report", "price_lookup"]},
+            "history": {agent: [] for agent in ["image_to_text", "text_to_diagram", "text_to_rag", "report", "price_lookup", "syntax_check", "architecture_check"]},
             "requirements": None,
             "flow_confirmed": False,
             "llm": initialize_llm("OpenAI")
@@ -112,7 +112,7 @@ class ConciergeWorkflow(Workflow):
         return OrchestratorEvent(request=user_msg_str)
 
     @step(pass_context=True)
-    async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent  | PriceLookupEvent | ImageToTextEvent | TextToDiagramEvent | TextToRAGEvent | ReporterEvent | StopEvent:
+    async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent  | PriceLookupEvent | ImageToTextEvent | TextToDiagramEvent | TextToRAGEvent | ArchitectureCheckEvent| SyntaxCheckEvent| ReporterEvent | StopEvent:
         
         print(f"Orchestrator received request: {ev.request}")
         
@@ -306,6 +306,8 @@ class ConciergeWorkflow(Workflow):
             )
 
         return ctx.data["image_to_text_agent"].handle_event(ev)
+    
+    
 
     @step(pass_context=True)
     async def text_to_diagram(self, ctx: Context, ev: TextToDiagramEvent) -> ConciergeEvent:
@@ -399,6 +401,66 @@ class ConciergeWorkflow(Workflow):
             )
 
         return ctx.data["report_agent"].handle_event(ev)
+
+    @step(pass_context=True)
+    async def syntax_check(self, ctx: Context, ev: SyntaxCheckEvent) -> ConciergeEvent:
+        print(f"Syntax Check received request: {ev.request}")
+        self.log_history(ctx, "syntax_check", "user", ev.request)
+
+        if "syntax_check_agent" not in ctx.data:
+            def check_syntax(code: str) -> str:
+                """Useful for checking the syntax of the provided code."""
+                print(f"Checking syntax for the provided code")
+                # Here you would implement the actual syntax checking logic
+                return "Syntax is valid"  # Placeholder response
+
+            system_prompt = (f"""
+                You are a helpful assistant that checks the syntax of code.
+                You can only check syntax for code provided to you by the check_syntax tool, don't make them up. Trust the output of the check_syntax tool even if it doesn't make sense to you.
+                Once you have checked the syntax, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
+                If the user asks to do anything other than check syntax, call the tool "need_help" to signal some other agent should help.
+            """)
+
+            ctx.data["syntax_check_agent"] = ConciergeAgent(
+                name="Syntax Check Agent",
+                parent=self,
+                tools=[check_syntax],
+                context=ctx,
+                system_prompt=system_prompt,
+                trigger_event=SyntaxCheckEvent
+            )
+
+        return ctx.data["syntax_check_agent"].handle_event(ev)
+
+    @step(pass_context=True)
+    async def architecture_check(self, ctx: Context, ev: ArchitectureCheckEvent) -> ConciergeEvent:
+        print(f"Architecture Check received request: {ev.request}")
+        self.log_history(ctx, "architecture_check", "user", ev.request)
+
+        if "architecture_check_agent" not in ctx.data:
+            def check_architecture(architecture: str) -> str:
+                """Useful for checking the architecture of the provided system."""
+                print(f"Checking architecture for the provided system")
+                # Here you would implement the actual architecture checking logic
+                return "Architecture is valid"  # Placeholder response
+
+            system_prompt = (f"""
+                You are a helpful assistant that checks the architecture of systems.
+                You can only check architecture for systems provided to you by the check_architecture tool, don't make them up. Trust the output of the check_architecture tool even if it doesn't make sense to you.
+                Once you have checked the architecture, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
+                If the user asks to do anything other than check architecture, call the tool "need_help" to signal some other agent should help.
+            """)
+
+            ctx.data["architecture_check_agent"] = ConciergeAgent(
+                name="Architecture Check Agent",
+                parent=self,
+                tools=[check_architecture],
+                context=ctx,
+                system_prompt=system_prompt,
+                trigger_event=ArchitectureCheckEvent
+            )
+
+        return ctx.data["architecture_check_agent"].handle_event(ev)
 
 class ConciergeAgent:
     name: str
@@ -496,3 +558,4 @@ if __name__ == "__main__":
         import nest_asyncio
         nest_asyncio.apply()
         asyncio.run(main())
+

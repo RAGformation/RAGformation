@@ -26,3 +26,9 @@ class TextToRAGEvent(Event):
 
 class ReporterEvent(Event):
     request: str
+
+class SyntaxCheckEvent(Event):
+    request: str
+
+class ArchitectureCheckEvent(Event):
+    request: str
