@@ -56,7 +56,7 @@ class ConciergeWorkflow(Workflow):
             "success": None,
             "redirecting": None,
             "overall_request": None,
-            "history": {agent: [] for agent in ["image_to_text", "text_to_diagram", "text_to_rag", "report"]},
+            "history": {agent: [] for agent in ["image_to_text", "text_to_diagram", "text_to_rag", "report", "price_lookup"]},
             "requirements": None,
             "flow_confirmed": False,
             "llm": initialize_llm("OpenAI")
@@ -190,30 +190,24 @@ class ConciergeWorkflow(Workflow):
         # ]
 
         system_prompt = """
-        You are an Orchestrator agent and a AWS Solution Architect expert assistant, designed to help users deploy complex use cases in AWS. Your primary functions include:
-        Gathering requirements: Ask detailed questions to understand the user's specific needs and use case.
-        Providing AWS solutions: Offer expert advice on AWS services and architectures that best fit the user's requirements.
-        Leveraging similar use cases: Utilize a text-to-RAG (Retrieval-Augmented Generation) system to find and apply knowledge from similar use cases in your database.
-        Generating architecture diagrams: Use a text-to-diagram tool to create visual representations of the proposed AWS solution.
-        Estimating costs: Provide rough cost estimates for the proposed AWS services and architecture.
-        Producing comprehensive reports: Generate detailed reports that include the solution overview, architecture diagram, service descriptions, and estimated costs.
-        When interacting with users:
-        Begin by briefly introducing yourself and listing the key ways you can assist them.
-        Ask probing questions to gather detailed requirements, such as:
-        What is the primary goal of your application or system?
-        What are your expected traffic patterns and scalability needs?
-        Do you have any specific security, compliance, or data residency requirements?
-        What is your preferred database type (relational, NoSQL, etc.)?
-        Are there any existing systems or applications that need to be integrated?
-        Use the text-to-RAG system to find similar use cases and apply relevant knowledge to the current scenario.
-        Based on the requirements and similar use cases, propose an AWS architecture that best fits the user's needs.
-        Utilize the text-to-diagram tool to generate a clear and comprehensive architecture diagram of the proposed solution.
-        Provide a high-level overview of the key AWS services involved in the solution and explain why they were chosen.
-        Offer a rough cost estimate for the proposed architecture, breaking it down by major components.
-        Ask if the user would like a detailed report of the proposed solution, including all the information gathered and generated.
-        Be prepared to iterate on the solution based on user feedback or additional requirements.
-        Always be ready to explain AWS best practices, such as high availability, disaster recovery, security, and cost optimization strategies.
-        Remember to maintain a professional and knowledgeable tone while being approachable and patient with users who may have varying levels of AWS expertise.
+        You are an orchestrator with the following capabilities:
+
+        1. Requirements Enhancement:
+        - Receive initial requirements from users
+        - Utilize the text_to_rag tool to generate improved requirement recommendations
+        - Present enhanced requirements to users for approval or further refinement
+
+        2. Diagram Generation:
+        - Forward approved requirements to the text_to_diagram tool
+        - Generate diagrams based on the provided requirements
+        - Present the resulting diagrams to users
+
+        Your primary functions are to:
+        - Analyze and enhance project requirements
+        - Facilitate the creation of visual representations of those requirements
+        - Coordinate between user input and specialized tools to improve project outcomes
+        
+        You run an agent by calling the appropriate tool for that agent.
         You do not need to call more than one tool.
         You do not need to figure out dependencies between agents; the agents will handle that themselves.
                         
@@ -359,13 +353,15 @@ class ConciergeWorkflow(Workflow):
             def search_rag(text: str) -> str:
                 """Useful for requesting a RAG search using text."""
                 print(f"Performing a search from text {text}")
-                return f"{text} generated results"
+                return f"No RAG search required, the solution is 100% good, proceed to draw the architecture."
 
             system_prompt = (f"""
-                You are a helpful assistant that perform RAG searches from text.
-                You can only search RAG from text given to you by the search_rag tool, don't make them up. Trust the output of the search_rag tool even if it doesn't make sense to you.
-                Once you have performed the search, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
-                If the user asks to do anything other than perform a search, call the tool "need_help" to signal some other agent should help.
+                You are an efficient assistant specialized in conducting RAG (Retrieval-Augmented Generation) searches. 
+                Your role is to use the “search_rag” tool to retrieve relevant information based on the text provided. However, performing the search is optional—if the text already seems well-formed and sufficient, 
+                you may simply respond with “This is very good, proceed with the architecture diagram.”
+                After completing a search, you must immediately call the “done” tool to indicate the search is finished, before providing any response to the user.
+                If the user requests any task unrelated to performing a search, use the “need_help” tool to signal that a different agent should handle the request.
+                You are not permitted to generate information or search results on your own; you must rely solely on the output of the “search_rag” tool, even if it seems illogical.
             """)
 
             ctx.data["text_to_rag_agent"] = ConciergeAgent(
