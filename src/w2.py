@@ -8,16 +8,14 @@ from llama_index.llms.openai import OpenAI
 from llama_index.llms.ollama import Ollama
 from llama_index.llms.anthropic import Anthropic
 from llama_index.llms.groq import Groq
-from llama_index.core.llms import ChatMessage
 from llama_index.agent.openai import OpenAIAgent
 
 from agent_scripts import text_to_diagram as draw_text_to_diagram
 
-try:
-    import dotenv
-    dotenv.load_dotenv()
-except ImportError:
-    dotenv = None
+from events import InitializeEvent, ConciergeEvent, OrchestratorEvent, PriceLookupEvent, ImageToTextEvent, TextToDiagramEvent, TextToRAGEvent, ReporterEvent
+
+import dotenv
+dotenv.load_dotenv()
 
 from llama_index.core.workflow import (
     step,
@@ -27,39 +25,6 @@ from llama_index.core.workflow import (
     StartEvent,
     StopEvent
 )
-
-class InitializeEvent(Event):
-    pass
-
-class ConciergeEvent(Event):
-    request: Optional[str] = None
-    just_completed: Optional[str] = None
-    need_help: Optional[bool] = False
-
-class OrchestratorEvent(Event):
-    request: str
-
-# class AuthenticateEvent(Event):
-#     request: str
-
-class PriceLookupEvent(Event):
-    request: str
-
-class ImageToTextEvent(Event):
-    request: str
-
-class TextToDiagramEvent(Event):
-    request: str
-
-class TextToRAGEvent(Event):
-    request: str
-
-class ReporterEvent(Event):
-    request: str
-
-class Message:
-    role: str = None
-    content: Optional[str] = None
 
 # Centralize LLM initialization
 def initialize_llm(llm_type: str):
@@ -95,7 +60,6 @@ class ConciergeWorkflow(Workflow):
             "requirements": None,
             "flow_confirmed": False,
             "llm": initialize_llm("OpenAI")
-            # "llm" : OpenAI(model="gpt-4o",temperature=0.8)
         })
         return ConciergeEvent()
 
