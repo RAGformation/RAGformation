@@ -74,9 +74,9 @@ class ConciergeWorkflow(Workflow):
             Your job is to ask the user questions to figure out what they want to do, and give them the available things they can do.
             That includes:
             * describe the requirements to the system for lookup
-            * looking up the price of a service     
             * receiving the description of a system
             * draw a diagram from a description
+            * looking up the price of a service     
             * generate a report
             You should start by listing the things you can help them do.            
             """
@@ -113,19 +113,6 @@ class ConciergeWorkflow(Workflow):
 
     @step(pass_context=True)
     async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent  | PriceLookupEvent | ImageToTextEvent | TextToDiagramEvent | TextToRAGEvent | ReporterEvent | StopEvent:
-        print(f"Orchestrator received request: {ev.request}")
-
-        # def create_emit_function(event_class):
-        #     def emit():
-        #         print(f"__emitted: {event_class.__name__.lower().replace('event', '')}")
-        #         self.send_event(event_class(request=ev.request))
-        #         return event_class(request=ev.request)
-        #     return emit
-
-        # tools = [
-        #     FunctionTool.from_defaults(fn=create_emit_function(event_class))
-        #     for event_class in [AuthenticateEvent, PriceLookupEvent, ImageToTextEvent, TextToDiagramEvent, TextToRAGEvent, ReporterEvent, ConciergeEvent, StopEvent]
-        # ]
         
         print(f"Orchestrator received request: {ev.request}")
         
@@ -147,11 +134,60 @@ class ConciergeWorkflow(Workflow):
             self.send_event(StopEvent())
             return True
 
+        def emit_price_lookup() -> bool:
+            """Call this if the user wants to look up a price"""
+            print("__emitted: price lookup")
+            self.send_event(PriceLookupEvent(request=ev.request))
+            return True
+
+        def emit_text_to_rag() -> bool:
+            """Call this if the user wants to perform a text to RAG search"""
+            print("__emitted: text to rag")
+            self.send_event(TextToRAGEvent(request=ev.request))
+            return True
+
+        def emit_report() -> bool:
+            """Call this if the user wants to generate a report"""
+            print("__emitted: report")
+            self.send_event(ReporterEvent(request=ev.request))
+            return True
+
         tools = [
             FunctionTool.from_defaults(fn=emit_concierge),
             FunctionTool.from_defaults(fn=emit_text_to_diagram),
-            FunctionTool.from_defaults(fn=emit_stop)
+            FunctionTool.from_defaults(fn=emit_stop),
+            FunctionTool.from_defaults(fn=emit_price_lookup),
+            FunctionTool.from_defaults(fn=emit_text_to_rag),
+            FunctionTool.from_defaults(fn=emit_report)
         ]
+        
+        
+        # ! ToDo does not work
+        # def create_emit_function(event_class):
+        #     def emit():
+        #         print(f"__emitted: {event_class.__name__.lower().replace('event', '')}")
+        #         event = event_class(request=ev.request)
+        #         self.send_event(event)
+        #         return True
+        #     return emit
+        
+        # event_classes = [
+        #     PriceLookupEvent,
+        #     ImageToTextEvent,
+        #     TextToDiagramEvent,
+        #     TextToRAGEvent,
+        #     ReporterEvent,
+        #     ConciergeEvent,
+        #     StopEvent
+        # ]
+        # tools = [
+        #     FunctionTool.from_defaults(
+        #         fn=create_emit_function(event_class),
+        #         name=f"emit_{event_class.__name__.lower().replace('event', '')}",
+        #         description=f"Call this if the user wants to {event_class.__name__.lower().replace('event', '')}"
+        #     )
+        #     for event_class in event_classes
+        # ]
 
         system_prompt = """
         You are an orchestration agent.
