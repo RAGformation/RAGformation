@@ -111,11 +111,23 @@ Generate a single-line Postman request that sends the following JSON body: {{"re
 # if there is an import error this prompt fixes it
 fix_import_str = " Fix the error below with correct import. \n {error_txt}. Only return the correct code nothing else."
 
+fix_and_write_code_str = """
+                    The following Python code has an error:
+
+                    {original_code}
+
+                    The error message is:
+                    {error_message}
+
+                    Please fix the code and return only the corrected code without any explanations. 
+                    If there are no errors, do nothing.
+                    """
 
 txt_2_diagram_prompt_template = PromptTemplate(txt_2_diagram_template_str)
 better_aws_prompt_template = PromptTemplate(better_aws_prompt_str)
 convert_postman_prompt_template = PromptTemplate(convert_postman_prompt_str)
 fix_import_prompt_template = PromptTemplate(fix_import_str)
+fix_and_write_code_template = PromptTemplate(fix_and_write_code_str)
 
 # you can create text prompt (for completion API)
 # prompt = qa_template.format(architecture_plan="hwllo world")

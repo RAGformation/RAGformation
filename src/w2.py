@@ -9,10 +9,15 @@ from llama_index.llms.ollama import Ollama
 from llama_index.llms.anthropic import Anthropic
 from llama_index.llms.groq import Groq
 from llama_index.agent.openai import OpenAIAgent
+from llama_index.core.agent.legacy.react.base import ReActAgent
+from llama_index.core.agent import AgentRunner
+from llama_index.indices.managed.llama_cloud import LlamaCloudIndex
+from prompts import fix_import_prompt_template, fix_and_write_code_template
+
 
 from agent_scripts import text_to_diagram as draw_text_to_diagram
 
-from events import InitializeEvent, ConciergeEvent, OrchestratorEvent, PriceLookupEvent, ImageToTextEvent, TextToDiagramEvent, TextToRAGEvent, ReporterEvent, SyntaxCheckEvent, ArchitectureCheckEvent
+from events import InitializeEvent, ConciergeEvent, OrchestratorEvent, PriceLookupEvent, ImageToTextEvent, TextToDiagramEvent, TextToRAGEvent, ReporterEvent, FixImportEvent, ArchitectureCheckEvent
 
 import dotenv
 dotenv.load_dotenv()
@@ -56,7 +61,9 @@ class ConciergeWorkflow(Workflow):
             "success": None,
             "redirecting": None,
             "overall_request": None,
-            "history": {agent: [] for agent in ["image_to_text", "text_to_diagram", "text_to_rag", "report", "price_lookup", "syntax_check", "architecture_check"]},
+            "history": {agent: [] for agent in ["image_to_text", "text_to_diagram", "text_to_rag", "report", "price_lookup", "fix_import", "architecture_check"]},
+            "diagram_syntax_error": None,
+            "diagram_node_arrangement_error": None,
             "requirements": None,
             "flow_confirmed": False,
             "llm": initialize_llm("OpenAI")
@@ -70,12 +77,13 @@ class ConciergeWorkflow(Workflow):
 
         if "concierge" not in ctx.data:
             system_prompt = """
-            You are a helpful assistant that is helping a user navigate an automatic system diagram reporter.
+            You are a helpful assistant that is helping a user navigate an automatic architecture diagram assistant
             Your job is to ask the user questions to figure out what they want to do, and give them the available things they can do.
             That includes:
-            * describe the requirements to the system for lookup
             * receiving the description of a system
             * draw a diagram from a description
+            * verifying if the diagram code is correct
+            * verifying if the architecture diagram resource positioning is correct
             * looking up the price of a service     
             * generate a report
             You should start by listing the things you can help them do.            
@@ -88,12 +96,21 @@ class ConciergeWorkflow(Workflow):
             #     allow_parallel_tool_calls=False,
             #     system_prompt=system_prompt
             # )
+            
+            
             ctx.data["concierge"] = FunctionCallingAgentWorker.from_tools(
                 tools=[],  # <-- This is likely the cause of the error
                 llm=ctx.data["llm"],
                 allow_parallel_tool_calls=False,
                 system_prompt=system_prompt
             ).as_agent()
+            
+            # agent = ReActAgent.from_tools(
+            #     [], 
+            #     llm=Groq(model="llama3-70b-8192", temperature=0.8) 
+            #     verbose=True
+            # )
+            # ctx.data["concierge"] = agent
 
         concierge = ctx.data["concierge"]
         if ctx.data["overall_request"]:
@@ -112,7 +129,7 @@ class ConciergeWorkflow(Workflow):
         return OrchestratorEvent(request=user_msg_str)
 
     @step(pass_context=True)
-    async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent  | PriceLookupEvent | ImageToTextEvent | TextToDiagramEvent | TextToRAGEvent | ArchitectureCheckEvent| SyntaxCheckEvent| ReporterEvent | StopEvent:
+    async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent  | PriceLookupEvent | ImageToTextEvent | TextToDiagramEvent | TextToRAGEvent | ArchitectureCheckEvent| FixImportEvent| ReporterEvent | StopEvent:
         
         print(f"Orchestrator received request: {ev.request}")
         
@@ -190,23 +207,40 @@ class ConciergeWorkflow(Workflow):
         # ]
 
         system_prompt = """
-        You are an orchestrator with the following capabilities:
-
-        1. Requirements Enhancement:
+        You are an advanced orchestrator agent with the following capabilities and responsibilities:
+        ## 1. Requirements Gathering and Enhancement
         - Receive initial requirements from users
-        - Use the text_to_rag tool to refine and enhance the requirements. If the tool indicates that the requirements are complete, proceed directly to generating the architecture diagram.
-        - Present enhanced requirements to users for approval or further refinement
+        - Utilize the `text_to_rag` tool to refine and enhance the requirements
+        - If the tool indicates that the requirements are complete, proceed directly to generating the architecture diagram
+        - Otherwise, present the enhanced requirements to users for approval or further refinement
+        - Iterate on the requirements gathering process until user approval is obtained
 
-        2. Diagram Generation:
-        - Forward approved requirements to the text_to_diagram tool
+        ## 2. Diagram Generation
+        - Forward approved requirements to the `text_to_diagram` tool
         - Generate diagrams based on the provided requirements
-        - Present the resulting diagrams to users
+        - If diagram generation encounters an error:
+        - Call the `fix_import` tool
+        - Apply the suggested changes
+        - Use the `text_to_diagram` tool again to redraw the diagram
+        - Present the resulting diagrams to users for review
         
-        You can run an agent by calling the appropriate tool for that agent.
-        You do not need to call more than one tool.
-        You do not need to figure out dependencies between agents; the agents will handle that themselves.
-                        
-        If you did not call any tools, return the string "FAILED" without quotes and nothing else.
+        ## 3. Error fixing
+        - If there is error forward requests to the `fix_import` tool.
+        - If you want to test the results generated from `text_to_diagram` asj the `fix_import` agent to review it.
+
+        ## 3. Tool Usage Guidelines
+        - Run an agent by calling the appropriate tool for that agent
+        - Call only one tool at a time
+        - Do not attempt to determine dependencies between agents; they will handle this internally
+
+        ## 4. Error Handling
+        - If no tools are called during the process, return the string "FAILED" (without quotes) and nothing else
+
+        ## 5. User Interaction
+        - Maintain clear communication with users throughout the process
+        - Seek user approval at key stages (e.g., after requirements enhancement, diagram generation)
+        - Be prepared to explain the process and results to users as needed
+
         """
 
         if "orchestrator" not in ctx.data:
@@ -271,7 +305,7 @@ class ConciergeWorkflow(Workflow):
                 parent=self,
                 tools=[lookup_price, search_for_service, has_requirements, has_confirmed_flow],
                 context=ctx,
-                system_prompt=system_prompt,
+                system_prompt=system_prompt,    
                 trigger_event=PriceLookupEvent
             )
 
@@ -310,7 +344,7 @@ class ConciergeWorkflow(Workflow):
     
 
     @step(pass_context=True)
-    async def text_to_diagram(self, ctx: Context, ev: TextToDiagramEvent) -> ConciergeEvent:
+    async def text_to_diagram(self, ctx: Context, ev: TextToDiagramEvent) -> FixImportEvent | OrchestratorEvent | ConciergeEvent:
 
         print(f"Text to Diagram received request: {ev.request}")
         self.log_history(ctx, "text_to_diagram", "user", ev.request)
@@ -318,15 +352,31 @@ class ConciergeWorkflow(Workflow):
         if "text_to_diagram_agent" not in ctx.data:
             def generate_diagram(text: str) -> str:
                 """Useful for describing a diagram using text."""
-                draw_text_to_diagram(text)
+                resp = draw_text_to_diagram(text)
                 
-                return "Output diagram saved to output_diagram.png"
+                if "successfully" in resp.lower():
+                    ctx['diagram_syntax_error'] = None
+                    return "Output diagram saved to output_diagram.png"
+                else:
+                    ctx['diagram_syntax_error'] = f"Error encountered: {resp}"
+                    return f"Error encountered: {resp}"
+
 
             system_prompt = (f"""
-                You are a helpful aws assistant that generates architecture diagram from text.
-                You can only generate diagrams from text given to you by the orchestrator, don't make them up. Trust the output of the generate_diagram tool even if it doesn't make sense to you.
-                Once you have generated the diagram, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
-                If the orchestrator asks to do anything other than generate a diagram, call the tool "need_help" to signal some other agent should help.
+                You are a specialized AWS assistant designed to generate architecture diagrams from provided text descriptions. Adhere to the following guidelines:
+                1. Diagram Generation:
+                - Only generate diagrams based on the text provided by the orchestrator.
+                - Do not create or invent diagrams without explicit input.
+                2. Error Handling:
+                - If you encounter an error while generating the diagram, immediately send the error back to the orchestrator.
+                - Do not attempt to fix errors yourself.
+                3. Task Limitation:
+                - Your primary function is to generate AWS architecture diagrams.
+                - If the orchestrator requests any task other than diagram generation, use the `need_help` tool to signal that another agent should assist.
+                4. Completion Protocol:
+                - After successfully generating the diagram, you MUST call the `done` tool to indicate task completion.
+                - Always use the `done` tool before providing your final response.
+                Remember: Your role is strictly limited to AWS architecture diagram generation based on provided text. For all other requests or tasks, defer to other specialized agents using the `need_help` tool.
             """)
 
             ctx.data["text_to_diagram_agent"] = ConciergeAgent(
@@ -402,35 +452,102 @@ class ConciergeWorkflow(Workflow):
 
         return ctx.data["report_agent"].handle_event(ev)
 
+
     @step(pass_context=True)
-    async def syntax_check(self, ctx: Context, ev: SyntaxCheckEvent) -> ConciergeEvent:
+    async def fix_import(self, ctx: Context, ev: FixImportEvent) -> TextToDiagramEvent | ConciergeEvent:
         print(f"Syntax Check received request: {ev.request}")
-        self.log_history(ctx, "syntax_check", "user", ev.request)
+        self.log_history(ctx, "fix_import", "user", ev.request)
 
-        if "syntax_check_agent" not in ctx.data:
-            def check_syntax(code: str) -> str:
-                """Useful for checking the syntax of the provided code."""
+        if "fix_import_agent" not in ctx.data:
+            def run_and_check_syntax() -> str:
+                """Run the file `temp_generated_code.py` if it runs successfully, the syntax is correct otherwise return the error."""
+                try:
+                    result = subprocess.run(['/Users/bread/Documents/RAGformation/.venv/bin/python', 'temp_generated_code.py'], capture_output=True, text=True)
+                    if result.returncode == 0:
+                        ctx['diagram_syntax_error'] = None
+                        return "Syntax is correct."
+                    else:
+                        ctx['diagram_syntax_error'] = f"Error encountered: {result.stderr}"
+                        return f"Error encountered: {result.stderr}"
+                except Exception as e:
+                    return f"Exception occurred: {str(e)}"
+
+            def suggest_imports(code: str) -> str:
+                """If the diagram generation throws an error, use this tool to fix the imports"""
                 print(f"Checking syntax for the provided code")
-                # Here you would implement the actual syntax checking logic
-                return "Syntax is valid"  # Placeholder response
+                if ctx['diagram_syntax_error'] is not None:
+                    index = LlamaCloudIndex(
+                    name="import-shema", 
+                    project_name="Default",
+                    organization_id="761971b0-20f5-4ea5-967a-f3e0f2e782cf",
+                    api_key="llx-D9IGGkRCRGVzPK0bbvYpAf0QgVsHiZ8dxSyA3yXrOmTGA1wb"
+                    )
 
-            system_prompt = (f"""
-                You are a helpful assistant that checks the syntax of code.
-                You can only check syntax for code provided to you by the check_syntax tool, don't make them up. Trust the output of the check_syntax tool even if it doesn't make sense to you.
-                Once you have checked the syntax, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
-                If the user asks to do anything other than check syntax, call the tool "need_help" to signal some other agent should help.
-            """)
+                    query = fix_import_prompt_template.format(error_txt = code)
+                    response = index.as_query_engine().query(query)
+                    return f"The correct import should be {response}"
+                else:
+                    return f"There are no import errors"
 
-            ctx.data["syntax_check_agent"] = ConciergeAgent(
-                name="Syntax Check Agent",
+            def write_to_file(content: str, filename: str = "temp_generated_code.py") -> str:
+                """Write the given content to a file."""
+                try:
+                    with open(filename, 'w') as file:
+                        file.write(content)
+                    return f"Content written to {filename} successfully."
+                except Exception as e:
+                    return f"Failed to write to file: {str(e)}"
+
+            def fix_and_write_code(input_filename: str = "temp_generated_code.py", output_filename: str = "temp_generated_code.py") -> str:
+                """Read code from a file, fix it using LLM, and write the fixed code to another file."""
+                try:
+                    with open(input_filename, 'r') as file:
+                        original_code = file.read()
+
+                    error_message = ctx.get('diagram_syntax_error', 'No errors.')
+                    
+                    llm = Anthropic(model="claude-3-opus-20240229")
+                    prompt = fix_and_write_code_template.format(original_code=original_code, error_message=error_message)
+                    resp = str(llm.complete(prompt))
+
+                    # Write the fixed code to the output file
+                    write_result = write_to_file(str(resp), output_filename)
+
+                    return f"Code fixed and written to {output_filename}."
+                except Exception as e:
+                    return f"Failed to fix and write code: {str(e)}"
+
+            system_prompt = f"""
+            You are an advanced programming assistant specializing in checking and fixing the syntax of Python code. Follow these steps in order:
+            ## 1. Initial Syntax Check
+            - Use the `run_and_check_syntax` tool to execute temp_generated_code.py python file
+            - If the code runs without errors, conclude that there are no syntax issues
+            - If errors are encountered, proceed to step 2
+
+            ## 2. Error Handling and Logging
+            - If syntax errors are detected:
+            - Use the `suggest_imports` tool to get the suggested imports for import errors.
+            - Use the `fix_and_write_code` tool to rewrite new code and save.
+
+            ## 3. Verification
+            - After applying fixes, rerun the `run_and_check_syntax` tool to verify that all syntax issues have been resolved
+            - If errors persist, repeat steps 2-3 as necessary
+            - Once new code is written, ask the `text_to_diagram` tool to regenerate the drawing.
+            
+            Once you have completed fixing new code, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
+            If you don't know what to do call need_help.
+            """
+
+            ctx.data["fix_import_agent"] = ConciergeAgent(
+                name="Fix Import Agent",
                 parent=self,
-                tools=[check_syntax],
+                tools=[run_and_check_syntax, suggest_imports, write_to_file, fix_and_write_code],
                 context=ctx,
                 system_prompt=system_prompt,
-                trigger_event=SyntaxCheckEvent
+                trigger_event=FixImportEvent
             )
 
-        return ctx.data["syntax_check_agent"].handle_event(ev)
+        return ctx.data["fix_import_agent"].handle_event(ev)
 
     @step(pass_context=True)
     async def architecture_check(self, ctx: Context, ev: ArchitectureCheckEvent) -> ConciergeEvent:
