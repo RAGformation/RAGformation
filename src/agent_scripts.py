@@ -101,7 +101,7 @@ def text_to_diagram(requirements_plan: str) -> str:
     with open("temp_generated_code.py", "w+") as f:
         f.write(resp)
         
-    print(resp)
+    # print(resp)
     
     # search for generated diagram name
     # pattern = r'with Diagram\("([^"]+)"'
@@ -114,22 +114,22 @@ def text_to_diagram(requirements_plan: str) -> str:
     #     diagram_name = None
     #     print("Diagram name not found\n Code not generated")
     
-    # # Execute the generated code to create the diagram
-    # try:
-    #     if resp and diagram_name:
-    #         resp = "from importall import *\n\n" + resp
-    #         exec(resp)
-    #         diagram_image = Image.open(diagram_name)
-    #     else:
-    #         diagram_image = None
-    #         resp = None
-    #         diagram_name = None
-    # except Exception as e:
-    #     print(f"Error generating diagram: {e}")
-    #     diagram_image = None
+    # Execute the generated code to create the diagram
+    try:
+        if resp:
+            exec(resp)
+            # diagram_image = Image.open(diagram_name)
+        else:
+            diagram_image = None
+            resp = None
+            diagram_name = None
+    except Exception as e:
+        print(f"Error generating diagram: {e}")
+        diagram_image = None
+        return "Error generating diagram: {e}"
     
     diagram_name = "output_diagram.png"
-    return diagram_name, resp
+    return "Diagram generated successfully."
 
     
     # messages = txt_2_diagram_prompt_template.format_messages(architecture_plan=requirements_plan)
