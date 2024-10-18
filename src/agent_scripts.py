@@ -41,13 +41,8 @@ def get_code_completion(messages, max_tokens=512, model="codellama/CodeLlama-70b
 def extract_code(text):
     # Pattern to match code blocks with or without language specification
     pattern = r'```(?:python)?\s*([\s\S]*?)\s*```'
-    
     matches = re.findall(pattern, text, re.MULTILINE)
     return matches
-    
-    # text = text.replace("```python", "")
-    # text = text.replace("```", "")
-    # return text
 
 def image_to_text(image_url: str) -> str:
     """
@@ -75,14 +70,14 @@ def text_to_diagram(requirements_plan: str) -> str:
         requirements_plan (str): A detailed description of the requirements for the AWS architecture.
     
     Returns:
-        code_str (str): The generated Python code for the AWS architecture using the Diagrams library.
-        diagram_image (Image): The generated image of the AWS architecture diagram
+        If the diagram generation was successful or failure
     """
     
     # llm = TogetherLLM(
     #     model="mistralai/Mixtral-8x7B-Instruct-v0.1"
     # )
     llm = Anthropic(model="claude-3-opus-20240229")
+    
     prompt = txt_2_diagram_prompt_template.format(architecture_plan=requirements_plan)
     resp = str(llm.complete(prompt))
     print(resp)
@@ -100,25 +95,10 @@ def text_to_diagram(requirements_plan: str) -> str:
     
     with open("temp_generated_code.py", "w+") as f:
         f.write(resp)
-        
-    # print(resp)
-    
-    # search for generated diagram name
-    # pattern = r'with Diagram\("([^"]+)"'
-    # match = re.search(pattern, resp)
-    # if match:
-    #     diagram_name = match.group(1) + ".png"
-    #     diagram_name = diagram_name.lower().replace(' ', '_')
-    #     print(diagram_name)
-    # else:
-    #     diagram_name = None
-    #     print("Diagram name not found\n Code not generated")
-    
-    # Execute the generated code to create the diagram
+
     try:
         if resp:
             exec(resp)
-            # diagram_image = Image.open(diagram_name)
         else:
             diagram_image = None
             resp = None
@@ -128,15 +108,7 @@ def text_to_diagram(requirements_plan: str) -> str:
         diagram_image = None
         return "Error generating diagram: {e}"
     
-    diagram_name = "output_diagram.png"
     return "Diagram generated successfully."
-
-    
-    # messages = txt_2_diagram_prompt_template.format_messages(architecture_plan=requirements_plan)
-     
-    # chat_completion = get_code_completion(messages)
-                
-    # print(chat_completion.choices[0].message.content)
 
 
 
