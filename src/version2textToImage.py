@@ -30,7 +30,7 @@ def run_script():
         str: "No errors" if the script runs successfully, or the error message if it fails.
     """
     try:
-        filename = "temp_generated_code.py"
+        filename = "../temp_generated_code.py"
         python_executable = os.path.join(os.environ['CONDA_PREFIX'], 'bin', 'python')
         python_executable = "/Users/kevintran/Downloads/RAGformation-main/myenv/bin/python"
 
@@ -80,7 +80,7 @@ def text_to_diagram(requirements_plan: str) -> str:
         if len(resp) >0:
             resp = resp[0]
     
-    with open("temp_generated_code.py", "w+") as f:
+    with open("../temp_generated_code.py", "w+") as f:
         f.write(resp)
         
     print(resp)
