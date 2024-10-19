@@ -1,3 +1,19 @@
+from llama_index.core.agent import FunctionCallingAgentWorker
+from llama_index.core.tools import FunctionTool
+from llama_index.utils.workflow import draw_all_possible_flows
+from typing import Optional, List, Callable
+from colorama import Fore, Style
+from llama_index.llms.azure_openai import AzureOpenAI
+from llama_index.llms.openai import OpenAI
+from llama_index.llms.ollama import Ollama
+from llama_index.llms.anthropic import Anthropic
+from llama_index.llms.groq import Groq
+from llama_index.core.llms import ChatMessage
+from llama_index.agent.openai import OpenAIAgent
+
+from agent_scripts import text_to_diagram as draw_text_to_diagram
+from events import InitializeEvent, ConciergeEvent, OrchestratorEvent, PriceLookupEvent, ImageToTextEvent, TextToDiagramEvent, TextToRAGEvent, ReporterEvent
+
 import os
 
 def load_env_file(file_path=".env"):
@@ -29,88 +45,20 @@ from llama_index.core.workflow import (
     StopEvent
 )
 
-LLM = None
-OpenAI = None
-AzureOpenAI = None
-Anthropic = None
-Ollama = None
-
-if LLM is None:
-    try:
-        from llama_index.llms.openai import OpenAI
-        LLM = "OpenAI"
-    except ImportError as e:
-        print(e)
-
-if LLM is None:
-    try:
-        from llama_index.llms.anthropic import Anthropic
-        LLM = "Anthropic"
-    except ImportError as e:
-        Anthropic = None
-        print(e)
-
-if LLM is None:
-    try:
-        from llama_index.llms.azure_openai import AzureOpenAI
-        LLM = "AzureOpenAI"
-    except ImportError as e:
-        AzureOpenAI = None
-        print(e)
-
-if LLM is None:
-    try:
-        from llama_index.llms.ollama import Ollama
-        LLM = "Ollama"
-    except ImportError as e:
-        Ollama = None
-        print(e)
-
-from llama_index.core.agent import FunctionCallingAgentWorker
-from llama_index.core.tools import FunctionTool
-from llama_index.utils.workflow import draw_all_possible_flows
-from typing import Optional, List, Callable
-from colorama import Fore, Style
-
-try:
-    from version2textToImage import text_to_diagram
-except (ImportError, TypeError):
-    text_to_diagram = None
-from pricingAgent import get_price_for_service
-from ragEndpoint import call_rag_endpoint
-
-class InitializeEvent(Event):
-    pass
-
-class ConciergeEvent(Event):
-    request: Optional[str] = None
-    just_completed: Optional[str] = None
-    need_help: Optional[bool] = False
-
-class OrchestratorEvent(Event):
-    request: str
-
-class AuthenticateEvent(Event):
-    request: str
-
-class PriceLookupEvent(Event):
-    request: str
-
-class ImageToTextEvent(Event):
-    request: str
-
-class TextToDiagramEvent(Event):
-    request: str
-
-class TextToRAGEvent(Event):
-    request: str
-
-class ReporterEvent(Event):
-    request: str
-
 class Message:
     role: str = None
     content: Optional[str] = None
+
+# Centralize LLM initialization
+def initialize_llm(llm_type: str):
+    llm_map = {
+        "AzureOpenAI": lambda: AzureOpenAI(engine="testing-first-gbu-doc", model="gpt-4o", temperature=0.4),
+        "Ollama": lambda: Ollama(model="llama3.1:8b", request_timeout=120.0),
+        "OpenAI": lambda:  OpenAI(model="gpt-4o",temperature=0.8),
+        "Anthropic": lambda: Anthropic(model="claude-3-opus-20240229", temperature=0.4),
+        "Groq": lambda: Groq(model="llama-3.1-70b-versatile", temperature=0.4),
+    }
+    return llm_map.get(llm_type, lambda: None)()
 
 class ConciergeWorkflow(Workflow):
 
@@ -147,39 +95,17 @@ class ConciergeWorkflow(Workflow):
 
     @step(pass_context=True)
     async def initialize(self, ctx: Context, ev: InitializeEvent) -> ConciergeEvent:
-        ctx.data["user"] = {
-            "username": None,
-            "session_token": None,
-            "account_id": None,
-        }
-        ctx.data["success"] = None
-        ctx.data["redirecting"] = None
-        ctx.data["overall_request"] = None
-
-        ctx.data["history"]: dict[str, List[Message]] = {
-            "authenticate": [],
-            "price_lookup": [],
-            "image_to_text": [],
-            "text_to_diagram": [],
-            "text_to_rag": [],
-            "report": [],
-        }
-        ctx.data["requirements"] = None
-        ctx.data["flow_confirmed"] = False
-
-        if LLM == "OpenAI" and callable(OpenAI):
-            ctx.data["llm"] = OpenAI(model="gpt-4o",temperature=0.4)
-        if LLM == "AzureOpenAI" and callable(AzureOpenAI):
-            ctx.data["llm"] = AzureOpenAI(
-                engine="testing-first-gbu-doc", model="gpt-4o", temperature=0.4
-            )
-        if LLM == "Anthropic" and callable(Anthropic):
-            ctx.data["llm"] = Anthropic(model="claude-3-5-sonnet-20240620",temperature=0.4)
-        if LLM == "Ollama" and callable(Ollama):
-            ctx.data["llm"] = Ollama(model="llama3.1:8b", request_timeout=120.0)
-            # ctx.data["llm"] = Ollama(model="llama3.2:3b", request_timeout=120.0)
-        print("LLM loaded: %s" % LLM)
-
+        ctx.data.update({
+            "user": {"username": None, "session_token": None, "account_id": None},
+            "success": None,
+            "redirecting": None,
+            "overall_request": None,
+            "history": {agent: [] for agent in ["authenticate", "price_lookup", "image_to_text", "text_to_diagram", "text_to_rag", "report"]},
+            "requirements": None,
+            "flow_confirmed": False,
+            "llm": initialize_llm("OpenAI")
+            # "llm" : OpenAI(model="gpt-4o",temperature=0.8)
+        })
         return ConciergeEvent()
 
     @step(pass_context=True)
@@ -214,22 +140,19 @@ class ConciergeWorkflow(Workflow):
 
                 Then use the respective tool to fulfill the user's request.            
             """)
-
-            agent_worker = FunctionCallingAgentWorker.from_tools(
-                tools=[],
+            ctx.data["concierge"] = FunctionCallingAgentWorker.from_tools(
+                tools=[],  # <-- This is likely the cause of the error
                 llm=ctx.data["llm"],
                 allow_parallel_tool_calls=False,
                 system_prompt=system_prompt
-            )
-            ctx.data["concierge"] = agent_worker.as_agent()
+            ).as_agent()
 
         concierge = ctx.data["concierge"]
-        if ctx.data["overall_request"] is not None:
-            print("There's an overall request in progress, it's ", ctx.data["overall_request"])
+        if ctx.data["overall_request"]:
             last_request = ctx.data["overall_request"]
             ctx.data["overall_request"] = None
             return OrchestratorEvent(request=last_request)
-        elif ev.just_completed is not None:
+        elif ev.just_completed:
             response = concierge.chat(f"FYI, the user has just completed the task: {ev.just_completed}")
         elif ev.need_help:
             print("The previous process needs help with ", ev.request)
@@ -244,43 +167,50 @@ class ConciergeWorkflow(Workflow):
 
     @step(pass_context=True)
     async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent | AuthenticateEvent | PriceLookupEvent | ImageToTextEvent | TextToDiagramEvent | TextToRAGEvent | ReporterEvent | StopEvent:
+        print(f"Orchestrator received request: {ev.request}")
+
+        # def create_emit_function(event_class):
+        #     def emit():
+        #         print(f"__emitted: {event_class.__name__.lower().replace('event', '')}")
+        #         self.send_event(event_class(request=ev.request))
+        #         return event_class(request=ev.request)
+        #     return emit
+
+        # tools = [
+        #     FunctionTool.from_defaults(fn=create_emit_function(event_class))
+        #     for event_class in [AuthenticateEvent, PriceLookupEvent, ImageToTextEvent, TextToDiagramEvent, TextToRAGEvent, ReporterEvent, ConciergeEvent, StopEvent]
+        # ]
 
         print(f"Orchestrator received request: {ev.request}")
+
+        def emit_stock_lookup() -> bool:
+            """Call this if the user wants to look up a stock price."""
+            print("__emitted: stock lookup")
+            self.send_event(StockLookupEvent(request=ev.request))
+            return True
 
         def emit_authenticate() -> bool:
             """Call this if the user wants to authenticate"""
             print("__emitted: authenticate")
-            self.send_event(AuthenticateEvent(request=ev.request))
-            return True
-
-        def emit_price_lookup() -> bool:
-            """Call this if the user wants to look up the price of a service."""
-            print("__emitted: price lookup")
-            self.send_event(PriceLookupEvent(request=ev.request))
-            return True
-
-        def emit_image_to_text() -> bool:
-            """Call this if the user wants to extract text from an image."""
-            print("__emitted: image to text")
-            self.send_event(ImageToTextEvent(request=ev.request))
-            return True
-
-        def emit_text_to_diagram() -> bool:
-            """Call this if the user wants to describe a diagram using text."""
-            print("__emitted: text to diagram")
             self.send_event(TextToDiagramEvent(request=ev.request))
             return True
 
-        def emit_text_to_rag() -> bool:
-            """Call this if the user wants to perform a RAG search using text."""
-            print("__emitted: text to rag")
-            self.send_event(TextToRAGEvent(request=ev.request))
+        def emit_text_to_diagram() -> bool:
+            """Call this if the user wants to authenticate"""
+            print("__emitted: authenticate")
+            self.send_event(TextToDiagramEvent(request=ev.request))
             return True
 
-        def emit_report() -> bool:
-            """Call this if the user wants to generate a report."""
-            print("__emitted: report")
-            self.send_event(ReporterEvent(request=ev.request))
+        def emit_account_balance() -> bool:
+            """Call this if the user wants to check an account balance."""
+            print("__emitted: account balance")
+            self.send_event(AccountBalanceEvent(request=ev.request))
+            return True
+
+        def emit_transfer_money() -> bool:
+            """Call this if the user wants to transfer money."""
+            print("__emitted: transfer money")
+            self.send_event(TransferMoneyEvent(request=ev.request))
             return True
 
         def emit_concierge() -> bool:
@@ -296,13 +226,12 @@ class ConciergeWorkflow(Workflow):
             return True
 
         tools = [
+            FunctionTool.from_defaults(fn=emit_stock_lookup),
             FunctionTool.from_defaults(fn=emit_authenticate),
-            FunctionTool.from_defaults(fn=emit_price_lookup),
-            FunctionTool.from_defaults(fn=emit_image_to_text),
-            FunctionTool.from_defaults(fn=emit_text_to_diagram),
-            FunctionTool.from_defaults(fn=emit_text_to_rag),
-            FunctionTool.from_defaults(fn=emit_report),
+            FunctionTool.from_defaults(fn=emit_account_balance),
+            FunctionTool.from_defaults(fn=emit_transfer_money),
             FunctionTool.from_defaults(fn=emit_concierge),
+            FunctionTool.from_defaults(fn=emit_text_to_diagram),
             FunctionTool.from_defaults(fn=emit_stop)
         ]
 
@@ -339,16 +268,17 @@ class ConciergeWorkflow(Workflow):
             Ensure that your decisions are efficient and accurate to maintain a smooth workflow. Your goal is to streamline task execution without unnecessary steps.
         """)
 
-        agent_worker = FunctionCallingAgentWorker.from_tools(
-            tools=tools,
-            llm=ctx.data["llm"],
-            allow_parallel_tool_calls=False,
-            system_prompt=system_prompt
-        )
-        ctx.data["orchestrator"] = agent_worker.as_agent()
+        if "orchestrator" not in ctx.data:
+            ctx.data["orchestrator"] = FunctionCallingAgentWorker.from_tools(
+                tools=tools,
+                llm=ctx.data["llm"],
+                allow_parallel_tool_calls=False,
+                system_prompt=system_prompt
+            ).as_agent()
 
-        orchestrator = ctx.data["orchestrator"]
-        response = str(orchestrator.chat(ev.request))
+        response = str(ctx.data["orchestrator"].chat(ev.request))
+
+        print(response)
 
         if response == "FAILED":
             print("Orchestration agent failed to return a valid speaker; try again")
@@ -402,7 +332,7 @@ class ConciergeWorkflow(Workflow):
     async def price_lookup(self, ctx: Context, ev: PriceLookupEvent) -> ConciergeEvent:
 
         print(f"Price Lookup received request: {ev.request}")
-        #self.log_history(ctx, "price_lookup", "user", ev.request)
+        self.log_history(ctx, "price_lookup", "user", ev.request)
 
         if "price_lookup_agent" not in ctx.data:
             def lookup_price(name: str) -> str:
@@ -410,7 +340,7 @@ class ConciergeWorkflow(Workflow):
                 print(f"Looking up price for {name} service")
 
                 # Call the pricingAgent.py to get the price of the service
-                get_price_for_service(name)
+                # get_price_for_service(name)
 
                 return f"Service {name} currently costs $100.00"
 
@@ -495,9 +425,9 @@ class ConciergeWorkflow(Workflow):
         if "text_to_diagram_agent" not in ctx.data:
             def generate_diagram(text: str) -> str:
                 """Useful for describing a diagram using text."""
-                print(f"Generating diagram from text {text}")
-                text_to_diagram(text)
-                return f"{text} generated a diagram"
+                draw_text_to_diagram(text)
+
+                return "Output diagram saved to output_diagram.png"
 
             system_prompt = (f"""
                 You are a helpful assistant that generates a diagram from text.
