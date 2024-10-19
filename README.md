@@ -106,7 +106,7 @@ We are proud to have created **RAGformation**, an application that makes selecti
 
 - What we learned
   
-# What's Next for RAGformation**
+# What's Next for RAGformation
 
 While we've made significant strides with RAGformation in simplifying cloud complexity, we're excited about the possibilities for further enhancement. Our future plans include:
 
