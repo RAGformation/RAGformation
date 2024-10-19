@@ -5,10 +5,12 @@ We wanted to give you a heads-up that this repository is currently undergoing so
 ![image](https://github.com/user-attachments/assets/8ca1109e-6929-437b-a1b3-871ed6d7b030)
 
 
-# RAGFormation
+# RAGformation
+
+[![Box Certificate](docs/boxCertificate.png)](docs/boxCertificate.pdf)
 
 ## Project name
-- RAGFormation
+- RAGformation
 
 ## Problem Statement
 - Enterprises have a tough time estimating how much cloud infrastructure will cost, and how it will look like?
@@ -51,9 +53,9 @@ Step into the future of cloud infrastructure with us, where complexity becomes s
 
 # What it does
 
-With RAGFormation, users can simplify cloud complexity and accelerate innovation effortlessly. By simply inputting their specific use case into our platform, users receive an optimal cloud service plan tailored to their needs. Utilizing Llama Index Workflows, RAGFormation generates a flow diagram that visually represents the suggested cloud services suited for their project.
+With RAGformation, users can simplify cloud complexity and accelerate innovation effortlessly. By simply inputting their specific use case into our platform, users receive an optimal cloud service plan tailored to their needs. Utilizing Llama Index Workflows, RAGformation generates a flow diagram that visually represents the suggested cloud services suited for their project.
 
-From this flow diagram, our platform provides detailed pricing information for the entire proposed cloud services setup. If users wish to refine the recommendations, RAGFormation adjusts the flow diagram based on their feedback, offering alternative services or configurations. Once the user confirms the optimized flow, the tool finalizes the pricing and generates a comprehensive report.
+From this flow diagram, our platform provides detailed pricing information for the entire proposed cloud services setup. If users wish to refine the recommendations, RAGformation adjusts the flow diagram based on their feedback, offering alternative services or configurations. Once the user confirms the optimized flow, the tool finalizes the pricing and generates a comprehensive report.
 
 Users are empowered to make informed decisions quickly, with visual representations and cost insights at their fingertips—transforming what was once a complex, time-consuming process into a seamless experience.
 
@@ -100,17 +102,17 @@ Users are empowered to make informed decisions quickly, with visual representati
 
 # Accomplishments That We're Proud Of
 
-We are proud to have created **RAGFormation**, an application that makes selecting and optimizing cloud services much easier and faster. By simplifying cloud complexity, we've empowered businesses to accelerate innovation without getting bogged down in the intricacies of cloud architecture. Our tool helps organizations quickly design tailored cloud solutions, optimize costs, and stay agile in a rapidly evolving tech landscape. We believe RAGFormation will enable companies to focus more on driving growth and delivering value, rather than navigating the often daunting world of cloud services.
+We are proud to have created **RAGformation**, an application that makes selecting and optimizing cloud services much easier and faster. By simplifying cloud complexity, we've empowered businesses to accelerate innovation without getting bogged down in the intricacies of cloud architecture. Our tool helps organizations quickly design tailored cloud solutions, optimize costs, and stay agile in a rapidly evolving tech landscape. We believe RAGformation will enable companies to focus more on driving growth and delivering value, rather than navigating the often daunting world of cloud services.
 
 - What we learned
   
-# What's Next for RAGFormation**
+# What's Next for RAGformation**
 
-While we've made significant strides with RAGFormation in simplifying cloud complexity, we're excited about the possibilities for further enhancement. Our future plans include:
+While we've made significant strides with RAGformation in simplifying cloud complexity, we're excited about the possibilities for further enhancement. Our future plans include:
 
-- **Fine-Tuning Smaller Models:** We're aiming to optimize and fine-tune smaller machine learning models within RAGFormation. This will increase efficiency and speed, allowing users to receive faster recommendations while reducing computational resources.
+- **Fine-Tuning Smaller Models:** We're aiming to optimize and fine-tune smaller machine learning models within RAGformation. This will increase efficiency and speed, allowing users to receive faster recommendations while reducing computational resources.
 
-- **Comparative Analysis Across Cloud Services:** We plan to expand RAGFormation's capabilities to provide comprehensive comparisons of different cloud services. By offering side-by-side evaluations, users can design the most effective cloud flow that balances performance and budget, whether they're considering AWS, Azure, Google Cloud, or specialized providers.
+- **Comparative Analysis Across Cloud Services:** We plan to expand RAGformation's capabilities to provide comprehensive comparisons of different cloud services. By offering side-by-side evaluations, users can design the most effective cloud flow that balances performance and budget, whether they're considering AWS, Azure, Google Cloud, or specialized providers.
 
 - **Support for Diverse Input Types:** To make the tool even more user-friendly, we'll enable support for various input formats such as images, PowerPoint presentations, Excel spreadsheets, and more. This flexibility will allow users to input their requirements in the format that suits them best, streamlining the process further.
 
@@ -118,6 +120,6 @@ While we've made significant strides with RAGFormation in simplifying cloud comp
 
 - **Enhanced Customization and Personalization:** We're working on features that allow for deeper customization based on user preferences and historical data. This means even more tailored cloud solutions that align perfectly with each organization's unique requirements.
 
-- **Real-Time Collaboration Tools:** Introducing collaboration features will enable teams to work together within RAGFormation, making it easier to coordinate on cloud architecture decisions and share insights instantly.
+- **Real-Time Collaboration Tools:** Introducing collaboration features will enable teams to work together within RAGformation, making it easier to coordinate on cloud architecture decisions and share insights instantly.
 
-Our commitment is to continuously evolve RAGFormation to meet the growing and changing needs of businesses. By focusing on these improvements, we aim to make cloud optimization not just easier, but a catalyst for innovation and growth.
+Our commitment is to continuously evolve RAGformation to meet the growing and changing needs of businesses. By focusing on these improvements, we aim to make cloud optimization not just easier, but a catalyst for innovation and growth.
