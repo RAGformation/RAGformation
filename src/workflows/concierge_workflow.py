@@ -6,7 +6,8 @@ from llama_index.core.tools import FunctionTool
 
 from utils.llm_initializer import initialize_llm
 from tools.diagram_tools import run_and_check_syntax, suggest_imports, fix_and_write_code, generate_diagram
-from tools.rag_tools import search_rag
+# from tools.rag_tools import search_rag
+from raw_tool_fuctions.rag_tools import find_similar_blogs
 from events.event_types import (
     InitializeEvent, ConciergeEvent, OrchestratorEvent,
     TextToDiagramEvent, TextToRAGEvent,
@@ -247,6 +248,18 @@ class ConciergeWorkflow(Workflow):
     async def text_to_rag(self, ctx: Context, ev: TextToRAGEvent) -> TextToDiagramEvent | ConciergeEvent:
         print(f"Text to RAG received request: {ev.request}")
         self.log_history(ctx, "text_to_rag", "user", ev.request)
+        
+        def search_rag(text: str) -> str:
+            """
+            Perform a RAG (Retrieval-Augmented Generation) search using the provided text.
+            """
+            print(f"Performing a search from text: {text}")
+            response = find_similar_blogs(text)
+            print(response)
+            ctx.data["rag_search_response"] = (
+                f"### User query: \n {text}\n ### Results from RAG:\n {response}"
+            )
+            return response
         
         if "text_to_rag_agent" not in ctx.data:
             tools = [search_rag]

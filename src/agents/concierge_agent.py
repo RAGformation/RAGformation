@@ -43,7 +43,7 @@ class ConciergeAgent:
             FunctionTool.from_defaults(fn=need_help),
         ]
         for t in tools:
-            self.tools.append(FunctionTool.from_defaults(fn=t(ctx=self.context)))
+            self.tools.append(FunctionTool.from_defaults(fn=t))
 
         agent_worker = FunctionCallingAgentWorker.from_tools(
             self.tools,
