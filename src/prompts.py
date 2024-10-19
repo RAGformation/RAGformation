@@ -130,6 +130,6 @@ fix_import_prompt_template = PromptTemplate(fix_import_str)
 fix_and_write_code_template = PromptTemplate(fix_and_write_code_str)
 
 # you can create text prompt (for completion API)
-# prompt = qa_template.format(architecture_plan="hwllo world")
+# prompt = qa_template.format(architecture_plan="hello world")
 # or easily convert to message prompts (for chat API)
 # messages = qa_template.format_messages(context_str=..., query_str=...)
