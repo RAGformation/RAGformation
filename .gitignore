@@ -166,3 +166,8 @@ cython_debug/
 
 # Python version
 .python-version
+
+# Auto-generated temporary files
+concierge_flows.html
+output_diagram.png
+temp_generated_code.py
