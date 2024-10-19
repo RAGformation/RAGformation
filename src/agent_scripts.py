@@ -1,12 +1,6 @@
-from llama_index.core.tools import FunctionTool
 import requests
-from typing import Optional
 import os
-from together import Together
 from prompts import txt_2_diagram_prompt_template
-from PIL import Image
-from llama_index.llms.openai import OpenAI
-from llama_index.llms.together import TogetherLLM
 from llama_index.llms.anthropic import Anthropic
 
 import openai
@@ -110,61 +104,6 @@ def text_to_diagram(requirements_plan: str) -> str:
     
     return "Diagram generated successfully."
 
-
-
-# # Create FunctionTools
-# image_to_text_tool = FunctionTool.from_defaults(
-#     image_to_text,
-#     name="ImageToTextTool",
-#     description="Converts an image to text using an API call. Input should be an image URL."
-# )
-
-# text_to_diagram_tool = FunctionTool.from_defaults(
-#     text_to_diagram,
-#     name="TextToDiagramTool",
-#     description="Calls text_to_diagram() to generate an AWS architecture code along with a corresponding visual diagram using the Diagrams Python library."
-# )
-
-# Example usage
-# tools = [image_to_text_tool, text_to_image_tool]
-
-# client = Together()
-
-# getDescriptionPrompt = "You are a UX/UI designer. Describe the attached screenshot or UI mockup in detail. I will feed in the output you give me to a coding model that will attempt to recreate this mockup, so please think step by step and describe the UI in detail. Pay close attention to background color, text color, font size, font family, padding, margin, border, etc. Match the colors and sizes exactly. Make sure to mention every part of the screenshot including any headers, footers, etc. Use the exact text from the screenshot."
-
-# imageUrl = "https://napkinsdev.s3.us-east-1.amazonaws.com/next-s3-uploads/d96a3145-472d-423a-8b79-bca3ad7978dd/trello-board.png"
-
-
-# stream = client.chat.completions.create(
-#     model="meta-llama/Llama-3.2-11B-Vision-Instruct-Turbo",
-#     messages=[
-#         {
-#             "role": "user",
-#             "content": [
-#                 {"type": "text", "text": getDescriptionPrompt},
-#                 {
-#                     "type": "image_url",
-#                     "image_url": {
-#                         "url": imageUrl,
-#                     },
-#                 },
-#             ],
-#         }
-#     ],
-#     stream=False,
-# )
-
-# for chunk in stream:
-#     if "choices" in chunk:
-#         print(chunk["choices"][0]["delta"]["content"] or "", end="", flush=True)
-
-
-# st = """
-# AWS lambda connected to S3 bucket.
-# Don't forget to include the imports.
-# """
-
-# text_to_diagram(st)
 
 if __name__ == "__main__":
     user_query = """
