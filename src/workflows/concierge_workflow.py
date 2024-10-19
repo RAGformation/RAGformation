@@ -5,7 +5,7 @@ from agents.concierge_agent import ConciergeAgent
 from llama_index.core.tools import FunctionTool
 
 from utils.llm_initializer import initialize_llm
-from tools.diagram_tools import run_and_check_syntax, suggest_imports, fix_and_write_code, generate_diagram
+from tools.diagram_tools import _run_and_check_syntax, _suggest_imports, _fix_and_write_code, _generate_diagram
 # from tools.rag_tools import search_rag
 from raw_tool_fuctions.rag_tools import find_similar_blogs
 from events.event_types import (
@@ -203,6 +203,22 @@ class ConciergeWorkflow(Workflow):
         print(f"Text to Diagram received request: {ev.request}")
         print(f"real query for t2d: {ctx.data['rag_search_response']}")
         self.log_history(ctx, "text_to_diagram", "user", ev.request)
+        
+        def run_and_check_syntax() -> str:
+            """Run the generated diagram code and check for syntax errors."""
+            return _run_and_check_syntax(ctx)
+
+        def suggest_imports() -> str:
+            """Suggest necessary imports for the diagram."""
+            return _suggest_imports(ctx)
+
+        def fix_and_write_code() -> str:
+            """Fix any errors in the generated code and write the corrected version to file."""
+            return _fix_and_write_code(ctx)
+
+        def generate_diagram() -> str:
+            """Use this tool to generate diagram."""
+            return _generate_diagram(ctx)
         
         if "text_to_diagram_agent" not in ctx.data:
             tools = [
