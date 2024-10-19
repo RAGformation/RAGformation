@@ -479,8 +479,8 @@ class ConciergeWorkflow(Workflow):
                     index = LlamaCloudIndex(
                     name="import-shema", 
                     project_name="Default",
-                    organization_id="761971b0-20f5-4ea5-967a-f3e0f2e782cf",
-                    api_key="llx-D9IGGkRCRGVzPK0bbvYpAf0QgVsHiZ8dxSyA3yXrOmTGA1wb"
+                    organization_id=os.environ["PINECONE_API_KEY"],
+                    api_key=os.environ["PINECONE_ORGANIZATION_ID"]
                     )
 
                     query = fix_import_prompt_template.format(error_txt = code)
