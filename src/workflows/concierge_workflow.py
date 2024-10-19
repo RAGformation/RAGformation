@@ -5,7 +5,7 @@ from agents.concierge_agent import ConciergeAgent
 from llama_index.core.tools import FunctionTool
 
 from utils.llm_initializer import initialize_llm
-from tools.diagram_tools import _run_and_check_syntax, _suggest_imports, _fix_and_write_code, _generate_diagram
+from raw_tool_fuctions.diagram_tools import _run_and_check_syntax, _suggest_imports, _fix_and_write_code, _generate_diagram
 # from tools.rag_tools import search_rag
 from raw_tool_fuctions.rag_tools import find_similar_blogs
 from events.event_types import (
@@ -271,10 +271,10 @@ class ConciergeWorkflow(Workflow):
             """
             print(f"Performing a search from text: {text}")
             response = find_similar_blogs(text)
+            response = f"### User query: \n {text}\n ### Results from RAG:\n {response}"
             print(response)
-            ctx.data["rag_search_response"] = (
-                f"### User query: \n {text}\n ### Results from RAG:\n {response}"
-            )
+            
+            ctx.data["rag_search_response"] = response
             return response
         
         if "text_to_rag_agent" not in ctx.data:
@@ -283,8 +283,7 @@ class ConciergeWorkflow(Workflow):
             system_prompt = """
                 You are an efficient assistant specialized in conducting searches. 
                 User will ask you some information or drawing an aws solution. you need to find a solution with similar usecase.
-                Your role is to use the "search_rag" tool to retrieve relevant information based on the text provided. However, performing the search is optional—if the text already seems well-formed and sufficient, 
-                you may simply respond with "This is very good, proceed with the architecture diagram."
+                Your role is to use the "search_rag" tool to retrieve relevant information based on the text provided to the tool as input.
                 If the user requests any task unrelated to performing a search, use the "need_help" tool to signal that a different agent should handle the request.
                 You are not permitted to generate information or search results on your own; you must rely solely on the output of the "search_rag" tool, even if it seems illogical.
             """
