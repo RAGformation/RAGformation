@@ -100,7 +100,7 @@ Return only the Python code without any additional text or backticks.
 
 # converts a potato prompt to better prompt
 better_aws_prompt_str = """Please rewrite the following prompt into a more refined AWS architecture planning request:
-{potato_prompt} 
+{potato_prompt}
 """
 
 # converts a prompt to postman like request (buggy doesn't work)
@@ -130,6 +130,6 @@ fix_import_prompt_template = PromptTemplate(fix_import_str)
 fix_and_write_code_template = PromptTemplate(fix_and_write_code_str)
 
 # you can create text prompt (for completion API)
-# prompt = qa_template.format(architecture_plan="hwllo world")
+# prompt = qa_template.format(architecture_plan="hello world")
 # or easily convert to message prompts (for chat API)
 # messages = qa_template.format_messages(context_str=..., query_str=...)
