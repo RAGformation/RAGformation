@@ -14,8 +14,6 @@ from llama_index.agent.openai import OpenAIAgent
 from agent_scripts import text_to_diagram as draw_text_to_diagram
 from events import InitializeEvent, ConciergeEvent, OrchestratorEvent, PriceLookupEvent, ImageToTextEvent, TextToDiagramEvent, TextToRAGEvent, ReporterEvent
 
-<<<<<<<< HEAD:src/experiments/workflows.py
-========
 import os
 
 def load_env_file(file_path=".env"):
@@ -31,7 +29,6 @@ def load_env_file(file_path=".env"):
     except Exception as e:
         print(f"An error occurred: {e}")
 
->>>>>>>> main:src/workflows.py
 try:
     import dotenv
     dotenv.load_dotenv()
@@ -113,32 +110,12 @@ class ConciergeWorkflow(Workflow):
 
     @step(pass_context=True)
     async def concierge(self, ctx: Context, ev: ConciergeEvent | StartEvent) -> InitializeEvent | StopEvent | OrchestratorEvent:
+        # initialize user if not already done
         if "user" not in ctx.data:
             return InitializeEvent()
 
+        # initialize concierge if not already done
         if "concierge" not in ctx.data:
-<<<<<<<< HEAD:src/experiments/workflows.py
-            system_prompt = """
-            You are a helpful assistant that is helping a user navigate an automatic system diagram reporter.
-            Your job is to ask the user questions to figure out what they want to do, and give them the available things they can do.
-            That includes:
-            * authenticating the user
-            * describe the requirements to the system for lookup
-            * looking up the price of a service     
-            * receiving the description of a system
-            * draw a diagram from a description
-            * generate a report
-            You should start by listing the things you can help them do.            
-            """
-            # system_prompt = PromptTemplate(system_prompt)
-            
-            # ctx.data["concierge"] = OpenAIAgent.from_tools(
-            #     tools=[],
-            #     llm=ctx.data["llm"],
-            #     allow_parallel_tool_calls=False,
-            #     system_prompt=system_prompt
-            # )
-========
             system_prompt = (f"""
                 You are a helpful assistant that is helping a user navigate an automatic system AWS diagram generator, reporter and pricing.
 
@@ -163,7 +140,6 @@ class ConciergeWorkflow(Workflow):
 
                 Then use the respective tool to fulfill the user's request.            
             """)
->>>>>>>> main:src/workflows.py
             ctx.data["concierge"] = FunctionCallingAgentWorker.from_tools(
                 tools=[],  # <-- This is likely the cause of the error
                 llm=ctx.data["llm"],
@@ -179,8 +155,10 @@ class ConciergeWorkflow(Workflow):
         elif ev.just_completed:
             response = concierge.chat(f"FYI, the user has just completed the task: {ev.just_completed}")
         elif ev.need_help:
+            print("The previous process needs help with ", ev.request)
             return OrchestratorEvent(request=ev.request)
         else:
+            # first time experience
             response = concierge.chat("Hello!")
 
         print(Fore.MAGENTA + str(response) + Style.RESET_ALL)
@@ -189,27 +167,6 @@ class ConciergeWorkflow(Workflow):
 
     @step(pass_context=True)
     async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent | AuthenticateEvent | PriceLookupEvent | ImageToTextEvent | TextToDiagramEvent | TextToRAGEvent | ReporterEvent | StopEvent:
-<<<<<<<< HEAD:src/experiments/workflows.py
-        print(f"Orchestrator received request: {ev.request}")
-
-        # def create_emit_function(event_class):
-        #     def emit():
-        #         print(f"__emitted: {event_class.__name__.lower().replace('event', '')}")
-        #         self.send_event(event_class(request=ev.request))
-        #         return event_class(request=ev.request)
-        #     return emit
-
-        # tools = [
-        #     FunctionTool.from_defaults(fn=create_emit_function(event_class))
-        #     for event_class in [AuthenticateEvent, PriceLookupEvent, ImageToTextEvent, TextToDiagramEvent, TextToRAGEvent, ReporterEvent, ConciergeEvent, StopEvent]
-        # ]
-        
-        print(f"Orchestrator received request: {ev.request}")
-
-        def emit_stock_lookup() -> bool:
-            """Call this if the user wants to look up a stock price."""      
-            print("__emitted: stock lookup")      
-========
         print(f"Orchestrator received request: {ev.request}")
 
         # def create_emit_function(event_class):
@@ -229,30 +186,12 @@ class ConciergeWorkflow(Workflow):
         def emit_stock_lookup() -> bool:
             """Call this if the user wants to look up a stock price."""
             print("__emitted: stock lookup")
->>>>>>>> main:src/workflows.py
             self.send_event(StockLookupEvent(request=ev.request))
             return True
 
         def emit_authenticate() -> bool:
             """Call this if the user wants to authenticate"""
             print("__emitted: authenticate")
-<<<<<<<< HEAD:src/experiments/workflows.py
-            self.send_event(TextToDiagramEvent(request=ev.request))
-            return True
-        
-        def emit_text_to_diagram() -> bool:
-            """Call this if the user wants to authenticate"""
-            print("__emitted: authenticate")
-            self.send_event(TextToDiagramEvent(request=ev.request))
-            return True
-
-        def emit_account_balance() -> bool:
-            """Call this if the user wants to check an account balance."""
-            print("__emitted: account balance")
-            self.send_event(AccountBalanceEvent(request=ev.request))
-            return True
-
-========
             self.send_event(TextToDiagramEvent(request=ev.request))
             return True
 
@@ -268,7 +207,6 @@ class ConciergeWorkflow(Workflow):
             self.send_event(AccountBalanceEvent(request=ev.request))
             return True
 
->>>>>>>> main:src/workflows.py
         def emit_transfer_money() -> bool:
             """Call this if the user wants to transfer money."""
             print("__emitted: transfer money")
@@ -297,17 +235,6 @@ class ConciergeWorkflow(Workflow):
             FunctionTool.from_defaults(fn=emit_stop)
         ]
 
-<<<<<<<< HEAD:src/experiments/workflows.py
-        system_prompt = """
-        You are an orchestration agent.
-        Your job is to decide which agent to run based on the current state of the user and what they've asked to do. 
-        You run an agent by calling the appropriate tool for that agent.
-        You do not need to call more than one tool.
-        You do not need to figure out dependencies between agents; the agents will handle that themselves.
-                        
-        If you did not call any tools, return the string "FAILED" without quotes and nothing else.
-        """
-========
         system_prompt = (f"""
             You are an advanced orchestrating agent designed to manage and optimize the execution of multiple subtasks within a complex workflow for AWS diagram generator, reporter and pricing. Your primary role is to coordinate between various tools, services, and APIs to ensure tasks are completed efficiently and accurately.
             Core responsibilities:
@@ -340,7 +267,6 @@ class ConciergeWorkflow(Workflow):
 
             Ensure that your decisions are efficient and accurate to maintain a smooth workflow. Your goal is to streamline task execution without unnecessary steps.
         """)
->>>>>>>> main:src/workflows.py
 
         if "orchestrator" not in ctx.data:
             ctx.data["orchestrator"] = FunctionCallingAgentWorker.from_tools(
@@ -351,11 +277,7 @@ class ConciergeWorkflow(Workflow):
             ).as_agent()
 
         response = str(ctx.data["orchestrator"].chat(ev.request))
-<<<<<<<< HEAD:src/experiments/workflows.py
-        
-========
 
->>>>>>>> main:src/workflows.py
         print(response)
 
         if response == "FAILED":
@@ -504,11 +426,7 @@ class ConciergeWorkflow(Workflow):
             def generate_diagram(text: str) -> str:
                 """Useful for describing a diagram using text."""
                 draw_text_to_diagram(text)
-<<<<<<<< HEAD:src/experiments/workflows.py
-                
-========
 
->>>>>>>> main:src/workflows.py
                 return "Output diagram saved to output_diagram.png"
 
             system_prompt = (f"""
@@ -661,8 +579,6 @@ class ConciergeAgent:
         return self.trigger_event(request=user_msg_str)
 
 draw_all_possible_flows(ConciergeWorkflow, filename="concierge_flows.html")
-
-
 
 async def main():
     c = ConciergeWorkflow(timeout=1200, verbose=True)
