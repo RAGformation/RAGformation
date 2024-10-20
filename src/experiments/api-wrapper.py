@@ -40,6 +40,7 @@ class ChatMessage(BaseModel):
     id: Optional[str] = None
     additional_kwargs: dict = {}
 
+
 class ChatCompletionsRequest(BaseModel):
     model: str
     messages: List[ChatMessage]
@@ -54,6 +55,7 @@ class ChatCompletionsRequest(BaseModel):
     frequency_penalty: Optional[float] = None
     user: Optional[str] = None
     stream: Optional[bool] = False
+
 
 class CustomStreamingResponse(fastapi.responses.StreamingResponse):
     def __init__(self, content, *args, **kwargs):
@@ -94,6 +96,7 @@ def filter_output_lines(lines):
             response_lines.append(line)
 
     return "".join(response_lines), "".join(debug_lines)
+
 
 @app.post("/v1/concierge")
 async def concierge(request: Request):

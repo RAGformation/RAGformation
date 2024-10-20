@@ -17,9 +17,21 @@ from prompts import fix_import_prompt_template, fix_and_write_code_template
 
 from agent_scripts import text_to_diagram as draw_text_to_diagram
 
-from events import InitializeEvent, ConciergeEvent, OrchestratorEvent, PriceLookupEvent, ImageToTextEvent, TextToDiagramEvent, TextToRAGEvent, ReporterEvent, FixImportEvent, ArchitectureCheckEvent
+from events import (
+    InitializeEvent,
+    ConciergeEvent,
+    OrchestratorEvent,
+    PriceLookupEvent,
+    ImageToTextEvent,
+    TextToDiagramEvent,
+    TextToRAGEvent,
+    ReporterEvent,
+    FixImportEvent,
+    ArchitectureCheckEvent,
+)
 
 import dotenv
+
 dotenv.load_dotenv()
 
 from llama_index.core.workflow import (
@@ -28,19 +40,23 @@ from llama_index.core.workflow import (
     Workflow,
     Event,
     StartEvent,
-    StopEvent
+    StopEvent,
 )
+
 
 # Centralize LLM initialization
 def initialize_llm(llm_type: str):
     llm_map = {
-        "AzureOpenAI": lambda: AzureOpenAI(engine="testing-first-gbu-doc", model="gpt-4o", temperature=0.4),
+        "AzureOpenAI": lambda: AzureOpenAI(
+            engine="testing-first-gbu-doc", model="gpt-4o", temperature=0.4
+        ),
         "Ollama": lambda: Ollama(model="llama3.1:8b", request_timeout=120.0),
-        "OpenAI": lambda:  OpenAI(model="gpt-4o",temperature=0.8),
+        "OpenAI": lambda: OpenAI(model="gpt-4o", temperature=0.8),
         "Anthropic": lambda: Anthropic(model="claude-3-opus-20240229", temperature=0.4),
         "Groq": lambda: Groq(model="llama3-70b-8192", temperature=0.8),
     }
     return llm_map.get(llm_type, lambda: None)()
+
 
 class ConciergeWorkflow(Workflow):
 
@@ -49,29 +65,46 @@ class ConciergeWorkflow(Workflow):
 
         # TODO: log system prompts (on first call)
         # TODO: log assistant responses
-        ctx.data["history"][agent].append({
-            "role": role,
-            "content": content,
-        })
+        ctx.data["history"][agent].append(
+            {
+                "role": role,
+                "content": content,
+            }
+        )
 
     @step(pass_context=True)
     async def initialize(self, ctx: Context, ev: InitializeEvent) -> ConciergeEvent:
-        ctx.data.update({
-            "user": {"username": None, "session_token": None, "account_id": None},
-            "success": None,
-            "redirecting": None,
-            "overall_request": None,
-            "history": {agent: [] for agent in ["image_to_text", "text_to_diagram", "text_to_rag", "report", "price_lookup", "fix_import", "architecture_check"]},
-            "diagram_syntax_error": None,
-            "diagram_node_arrangement_error": None,
-            "requirements": None,
-            "flow_confirmed": False,
-            "llm": initialize_llm("OpenAI")
-        })
+        ctx.data.update(
+            {
+                "user": {"username": None, "session_token": None, "account_id": None},
+                "success": None,
+                "redirecting": None,
+                "overall_request": None,
+                "history": {
+                    agent: []
+                    for agent in [
+                        "image_to_text",
+                        "text_to_diagram",
+                        "text_to_rag",
+                        "report",
+                        "price_lookup",
+                        "fix_import",
+                        "architecture_check",
+                    ]
+                },
+                "diagram_syntax_error": None,
+                "diagram_node_arrangement_error": None,
+                "requirements": None,
+                "flow_confirmed": False,
+                "llm": initialize_llm("OpenAI"),
+            }
+        )
         return ConciergeEvent()
 
     @step(pass_context=True)
-    async def concierge(self, ctx: Context, ev: ConciergeEvent | StartEvent) -> InitializeEvent | StopEvent | OrchestratorEvent:
+    async def concierge(
+        self, ctx: Context, ev: ConciergeEvent | StartEvent
+    ) -> InitializeEvent | StopEvent | OrchestratorEvent:
         if "user" not in ctx.data:
             return InitializeEvent()
 
@@ -89,25 +122,24 @@ class ConciergeWorkflow(Workflow):
             You should start by listing the things you can help them do.            
             """
             # system_prompt = PromptTemplate(system_prompt)
-            
+
             # ctx.data["concierge"] = OpenAIAgent.from_tools(
             #     tools=[],
             #     llm=ctx.data["llm"],
             #     allow_parallel_tool_calls=False,
             #     system_prompt=system_prompt
             # )
-            
-            
+
             ctx.data["concierge"] = FunctionCallingAgentWorker.from_tools(
                 tools=[],  # <-- This is likely the cause of the error
                 llm=ctx.data["llm"],
                 allow_parallel_tool_calls=False,
-                system_prompt=system_prompt
+                system_prompt=system_prompt,
             ).as_agent()
-            
+
             # agent = ReActAgent.from_tools(
-            #     [], 
-            #     llm=Groq(model="llama3-70b-8192", temperature=0.8) 
+            #     [],
+            #     llm=Groq(model="llama3-70b-8192", temperature=0.8)
             #     verbose=True
             # )
             # ctx.data["concierge"] = agent
@@ -118,7 +150,9 @@ class ConciergeWorkflow(Workflow):
             ctx.data["overall_request"] = None
             return OrchestratorEvent(request=last_request)
         elif ev.just_completed:
-            response = concierge.chat(f"FYI, the user has just completed the task: {ev.just_completed}")
+            response = concierge.chat(
+                f"FYI, the user has just completed the task: {ev.just_completed}"
+            )
         elif ev.need_help:
             return OrchestratorEvent(request=ev.request)
         else:
@@ -129,10 +163,22 @@ class ConciergeWorkflow(Workflow):
         return OrchestratorEvent(request=user_msg_str)
 
     @step(pass_context=True)
-    async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent  | PriceLookupEvent | ImageToTextEvent | TextToDiagramEvent | TextToRAGEvent | ArchitectureCheckEvent| FixImportEvent| ReporterEvent | StopEvent:
-        
+    async def orchestrator(
+        self, ctx: Context, ev: OrchestratorEvent
+    ) -> (
+        ConciergeEvent
+        | PriceLookupEvent
+        | ImageToTextEvent
+        | TextToDiagramEvent
+        | TextToRAGEvent
+        | ArchitectureCheckEvent
+        | FixImportEvent
+        | ReporterEvent
+        | StopEvent
+    ):
+
         print(f"Orchestrator received request: {ev.request}")
-        
+
         def emit_text_to_diagram() -> bool:
             """Call this if the user wants to text to diagram"""
             print("__emitted: text to diagram")
@@ -175,10 +221,9 @@ class ConciergeWorkflow(Workflow):
             FunctionTool.from_defaults(fn=emit_stop),
             FunctionTool.from_defaults(fn=emit_price_lookup),
             FunctionTool.from_defaults(fn=emit_text_to_rag),
-            FunctionTool.from_defaults(fn=emit_report)
+            FunctionTool.from_defaults(fn=emit_report),
         ]
-        
-        
+
         # ! ToDo does not work
         # def create_emit_function(event_class):
         #     def emit():
@@ -187,7 +232,7 @@ class ConciergeWorkflow(Workflow):
         #         self.send_event(event)
         #         return True
         #     return emit
-        
+
         # event_classes = [
         #     PriceLookupEvent,
         #     ImageToTextEvent,
@@ -248,11 +293,11 @@ class ConciergeWorkflow(Workflow):
                 tools=tools,
                 llm=ctx.data["llm"],
                 allow_parallel_tool_calls=False,
-                system_prompt=system_prompt
+                system_prompt=system_prompt,
             ).as_agent()
 
         response = str(ctx.data["orchestrator"].chat(ev.request))
-        
+
         print(response)
 
         if response == "FAILED":
@@ -266,6 +311,7 @@ class ConciergeWorkflow(Workflow):
         self.log_history(ctx, "price_lookup", "user", ev.request)
 
         if "price_lookup_agent" not in ctx.data:
+
             def lookup_price(name: str) -> str:
                 """Useful for looking the price of a service."""
                 print(f"Looking up price for {name} service")
@@ -289,7 +335,7 @@ class ConciergeWorkflow(Workflow):
                 print("Price Lookup checking if user confirmed the flow")
                 return ctx.data["requirements"]
 
-            system_prompt = (f"""
+            system_prompt = f"""
                 You are a helpful assistant that is looking up service prices.
                 The user may not know the name of the service they're interested in,
                 so you can help them look it up by a description of what the service does or provides.
@@ -298,15 +344,20 @@ class ConciergeWorkflow(Workflow):
                 The user can only request a price lookup if they have confirmed the flow, which you can check with the flow_confirmed tool.
                 Once you have retrieved a price, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
                 If the user asks to do anything other than look up a service price, call the tool "need_help" to signal some other agent should help.
-            """)
+            """
 
             ctx.data["price_lookup_agent"] = ConciergeAgent(
                 name="Price Lookup Agent",
                 parent=self,
-                tools=[lookup_price, search_for_service, has_requirements, has_confirmed_flow],
+                tools=[
+                    lookup_price,
+                    search_for_service,
+                    has_requirements,
+                    has_confirmed_flow,
+                ],
                 context=ctx,
-                system_prompt=system_prompt,    
-                trigger_event=PriceLookupEvent
+                system_prompt=system_prompt,
+                trigger_event=PriceLookupEvent,
             )
 
         return ctx.data["price_lookup_agent"].handle_event(ev)
@@ -318,17 +369,18 @@ class ConciergeWorkflow(Workflow):
         self.log_history(ctx, "image_to_text", "user", ev.request)
 
         if "image_to_text_agent" not in ctx.data:
+
             def extract_text(image: str) -> str:
                 """Useful for extracting text from an image."""
                 print(f"Extracting text from image {image}")
                 return f"Image {image} contains Lorem ipsum dolor sit amet"
 
-            system_prompt = (f"""
+            system_prompt = f"""
                 You are a helpful assistant that extracts text from an image.
                 You can only extract text from images given to you by the extract_text tool, don't make them up. Trust the output of the extract_text tool even if it doesn't make sense to you.
                 Once you have extracted the text, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
                 If the user asks to do anything other than extract text from an image, call the tool "need_help" to signal some other agent should help.
-            """)
+            """
 
             ctx.data["image_to_text_agent"] = ConciergeAgent(
                 name="Image to Text Agent",
@@ -336,33 +388,33 @@ class ConciergeWorkflow(Workflow):
                 tools=[extract_text],
                 context=ctx,
                 system_prompt=system_prompt,
-                trigger_event=ImageToTextEvent
+                trigger_event=ImageToTextEvent,
             )
 
         return ctx.data["image_to_text_agent"].handle_event(ev)
-    
-    
 
     @step(pass_context=True)
-    async def text_to_diagram(self, ctx: Context, ev: TextToDiagramEvent) -> FixImportEvent | OrchestratorEvent | ConciergeEvent:
+    async def text_to_diagram(
+        self, ctx: Context, ev: TextToDiagramEvent
+    ) -> FixImportEvent | OrchestratorEvent | ConciergeEvent:
 
         print(f"Text to Diagram received request: {ev.request}")
         self.log_history(ctx, "text_to_diagram", "user", ev.request)
 
         if "text_to_diagram_agent" not in ctx.data:
+
             def generate_diagram(text: str) -> str:
                 """Useful for describing a diagram using text."""
                 resp = draw_text_to_diagram(text)
-                
+
                 if "successfully" in resp.lower():
-                    ctx['diagram_syntax_error'] = None
+                    ctx["diagram_syntax_error"] = None
                     return "Output diagram saved to output_diagram.png"
                 else:
-                    ctx['diagram_syntax_error'] = f"Error encountered: {resp}"
+                    ctx["diagram_syntax_error"] = f"Error encountered: {resp}"
                     return f"Error encountered: {resp}"
 
-
-            system_prompt = (f"""
+            system_prompt = f"""
                 You are a specialized AWS assistant designed to generate architecture diagrams from provided text descriptions. Adhere to the following guidelines:
                 1. Diagram Generation:
                 - Only generate diagrams based on the text provided by the orchestrator.
@@ -377,7 +429,7 @@ class ConciergeWorkflow(Workflow):
                 - After successfully generating the diagram, you MUST call the `done` tool to indicate task completion.
                 - Always use the `done` tool before providing your final response.
                 Remember: Your role is strictly limited to AWS architecture diagram generation based on provided text. For all other requests or tasks, defer to other specialized agents using the `need_help` tool.
-            """)
+            """
 
             ctx.data["text_to_diagram_agent"] = ConciergeAgent(
                 name="Text to Diagram Agent",
@@ -385,7 +437,7 @@ class ConciergeWorkflow(Workflow):
                 tools=[generate_diagram],
                 context=ctx,
                 system_prompt=system_prompt,
-                trigger_event=TextToDiagramEvent
+                trigger_event=TextToDiagramEvent,
             )
 
         return ctx.data["text_to_diagram_agent"].handle_event(ev)
@@ -397,19 +449,20 @@ class ConciergeWorkflow(Workflow):
         self.log_history(ctx, "text_to_rag", "user", ev.request)
 
         if "text_to_rag_agent" not in ctx.data:
+
             def search_rag(text: str) -> str:
                 """Useful for requesting a RAG search using text."""
                 print(f"Performing a search from text {text}")
                 return f"No RAG search required, the solution is 100% good, proceed to draw the architecture."
 
-            system_prompt = (f"""
+            system_prompt = f"""
                 You are an efficient assistant specialized in conducting RAG (Retrieval-Augmented Generation) searches. 
                 Your role is to use the “search_rag” tool to retrieve relevant information based on the text provided. However, performing the search is optional—if the text already seems well-formed and sufficient, 
                 you may simply respond with “This is very good, proceed with the architecture diagram.”
                 After completing a search, you must immediately call the “done” tool to indicate the search is finished, before providing any response to the user.
                 If the user requests any task unrelated to performing a search, use the “need_help” tool to signal that a different agent should handle the request.
                 You are not permitted to generate information or search results on your own; you must rely solely on the output of the “search_rag” tool, even if it seems illogical.
-            """)
+            """
 
             ctx.data["text_to_rag_agent"] = ConciergeAgent(
                 name="Text to RAG Agent",
@@ -417,7 +470,7 @@ class ConciergeWorkflow(Workflow):
                 tools=[search_rag],
                 context=ctx,
                 system_prompt=system_prompt,
-                trigger_event=TextToRAGEvent
+                trigger_event=TextToRAGEvent,
             )
 
         return ctx.data["text_to_rag_agent"].handle_event(ev)
@@ -429,17 +482,18 @@ class ConciergeWorkflow(Workflow):
         self.log_history(ctx, "report", "user", ev.request)
 
         if "report_agent" not in ctx.data:
+
             def report() -> str:
                 """Useful for generating a report."""
                 print(f"Generating report from text")
                 return f"Report generated"
 
-            system_prompt = (f"""
+            system_prompt = f"""
                 You are a helpful assistant that generates a report.
                 You can only generate a report by the report tool, don't make them up. Trust the output of the report tool even if it doesn't make sense to you.
                 Once you have performed the search, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
                 If the user asks to do anything other than generate a search, call the tool "need_help" to signal some other agent should help.
-            """)
+            """
 
             ctx.data["report_agent"] = ConciergeAgent(
                 name="Report Agent",
@@ -447,27 +501,38 @@ class ConciergeWorkflow(Workflow):
                 tools=[report],
                 context=ctx,
                 system_prompt=system_prompt,
-                trigger_event=ReporterEvent
+                trigger_event=ReporterEvent,
             )
 
         return ctx.data["report_agent"].handle_event(ev)
 
-
     @step(pass_context=True)
-    async def fix_import(self, ctx: Context, ev: FixImportEvent) -> TextToDiagramEvent | ConciergeEvent:
+    async def fix_import(
+        self, ctx: Context, ev: FixImportEvent
+    ) -> TextToDiagramEvent | ConciergeEvent:
         print(f"Syntax Check received request: {ev.request}")
         self.log_history(ctx, "fix_import", "user", ev.request)
 
         if "fix_import_agent" not in ctx.data:
+
             def run_and_check_syntax() -> str:
                 """Run the file `temp_generated_code.py` if it runs successfully, the syntax is correct otherwise return the error."""
                 try:
-                    result = subprocess.run(['/Users/bread/Documents/RAGformation/.venv/bin/python', 'temp_generated_code.py'], capture_output=True, text=True)
+                    result = subprocess.run(
+                        [
+                            "/Users/bread/Documents/RAGformation/.venv/bin/python",
+                            "temp_generated_code.py",
+                        ],
+                        capture_output=True,
+                        text=True,
+                    )
                     if result.returncode == 0:
-                        ctx['diagram_syntax_error'] = None
+                        ctx["diagram_syntax_error"] = None
                         return "Syntax is correct."
                     else:
-                        ctx['diagram_syntax_error'] = f"Error encountered: {result.stderr}"
+                        ctx["diagram_syntax_error"] = (
+                            f"Error encountered: {result.stderr}"
+                        )
                         return f"Error encountered: {result.stderr}"
                 except Exception as e:
                     return f"Exception occurred: {str(e)}"
@@ -475,39 +540,46 @@ class ConciergeWorkflow(Workflow):
             def suggest_imports(code: str) -> str:
                 """If the diagram generation throws an error, use this tool to fix the imports"""
                 print(f"Checking syntax for the provided code")
-                if ctx['diagram_syntax_error'] is not None:
+                if ctx["diagram_syntax_error"] is not None:
                     index = LlamaCloudIndex(
-                    name="import-shema", 
-                    project_name="Default",
-                    organization_id="ORGANIZATION_ID",
-                    api_key="API_KEY"
+                        name="import-shema",
+                        project_name="Default",
+                        organization_id=os.environ["PINECONE_API_KEY"],
+                        api_key=os.environ["PINECONE_ORGANIZATION_ID"],
                     )
 
-                    query = fix_import_prompt_template.format(error_txt = code)
+                    query = fix_import_prompt_template.format(error_txt=code)
                     response = index.as_query_engine().query(query)
                     return f"The correct import should be {response}"
                 else:
                     return f"There are no import errors"
 
-            def write_to_file(content: str, filename: str = "temp_generated_code.py") -> str:
+            def write_to_file(
+                content: str, filename: str = "temp_generated_code.py"
+            ) -> str:
                 """Write the given content to a file."""
                 try:
-                    with open(filename, 'w') as file:
+                    with open(filename, "w") as file:
                         file.write(content)
                     return f"Content written to {filename} successfully."
                 except Exception as e:
                     return f"Failed to write to file: {str(e)}"
 
-            def fix_and_write_code(input_filename: str = "temp_generated_code.py", output_filename: str = "temp_generated_code.py") -> str:
+            def fix_and_write_code(
+                input_filename: str = "temp_generated_code.py",
+                output_filename: str = "temp_generated_code.py",
+            ) -> str:
                 """Read code from a file, fix it using LLM, and write the fixed code to another file."""
                 try:
-                    with open(input_filename, 'r') as file:
+                    with open(input_filename, "r") as file:
                         original_code = file.read()
 
-                    error_message = ctx.get('diagram_syntax_error', 'No errors.')
-                    
+                    error_message = ctx.get("diagram_syntax_error", "No errors.")
+
                     llm = Anthropic(model="claude-3-opus-20240229")
-                    prompt = fix_and_write_code_template.format(original_code=original_code, error_message=error_message)
+                    prompt = fix_and_write_code_template.format(
+                        original_code=original_code, error_message=error_message
+                    )
                     resp = str(llm.complete(prompt))
 
                     # Write the fixed code to the output file
@@ -541,32 +613,40 @@ class ConciergeWorkflow(Workflow):
             ctx.data["fix_import_agent"] = ConciergeAgent(
                 name="Fix Import Agent",
                 parent=self,
-                tools=[run_and_check_syntax, suggest_imports, write_to_file, fix_and_write_code],
+                tools=[
+                    run_and_check_syntax,
+                    suggest_imports,
+                    write_to_file,
+                    fix_and_write_code,
+                ],
                 context=ctx,
                 system_prompt=system_prompt,
-                trigger_event=FixImportEvent
+                trigger_event=FixImportEvent,
             )
 
         return ctx.data["fix_import_agent"].handle_event(ev)
 
     @step(pass_context=True)
-    async def architecture_check(self, ctx: Context, ev: ArchitectureCheckEvent) -> ConciergeEvent:
+    async def architecture_check(
+        self, ctx: Context, ev: ArchitectureCheckEvent
+    ) -> ConciergeEvent:
         print(f"Architecture Check received request: {ev.request}")
         self.log_history(ctx, "architecture_check", "user", ev.request)
 
         if "architecture_check_agent" not in ctx.data:
+
             def check_architecture(architecture: str) -> str:
                 """Useful for checking the architecture of the provided system."""
                 print(f"Checking architecture for the provided system")
                 # Here you would implement the actual architecture checking logic
                 return "Architecture is valid"  # Placeholder response
 
-            system_prompt = (f"""
+            system_prompt = f"""
                 You are a helpful assistant that checks the architecture of systems.
                 You can only check architecture for systems provided to you by the check_architecture tool, don't make them up. Trust the output of the check_architecture tool even if it doesn't make sense to you.
                 Once you have checked the architecture, you *must* call the tool named "done" to signal that you are done. Do this before you respond.
                 If the user asks to do anything other than check architecture, call the tool "need_help" to signal some other agent should help.
-            """)
+            """
 
             ctx.data["architecture_check_agent"] = ConciergeAgent(
                 name="Architecture Check Agent",
@@ -574,10 +654,11 @@ class ConciergeWorkflow(Workflow):
                 tools=[check_architecture],
                 context=ctx,
                 system_prompt=system_prompt,
-                trigger_event=ArchitectureCheckEvent
+                trigger_event=ArchitectureCheckEvent,
             )
 
         return ctx.data["architecture_check_agent"].handle_event(ev)
+
 
 class ConciergeAgent:
     name: str
@@ -589,13 +670,13 @@ class ConciergeAgent:
     trigger_event: Event
 
     def __init__(
-            self,
-            parent: Workflow,
-            tools: List[Callable],
-            system_prompt: str,
-            trigger_event: Event,
-            context: Context,
-            name: str,
+        self,
+        parent: Workflow,
+        tools: List[Callable],
+        system_prompt: str,
+        trigger_event: Event,
+        context: Context,
+        name: str,
     ):
         self.name = name
         self.parent = parent
@@ -615,11 +696,13 @@ class ConciergeAgent:
             """If the user asks to do something you don't know how to do, call this."""
             print(f"{self.name} needs help")
             self.context.data["redirecting"] = True
-            parent.send_event(ConciergeEvent(request=self.current_event.request,need_help=True))
+            parent.send_event(
+                ConciergeEvent(request=self.current_event.request, need_help=True)
+            )
 
         self.tools = [
             FunctionTool.from_defaults(fn=done),
-            FunctionTool.from_defaults(fn=need_help)
+            FunctionTool.from_defaults(fn=need_help),
         ]
         for t in tools:
             self.tools.append(FunctionTool.from_defaults(fn=t))
@@ -628,7 +711,7 @@ class ConciergeAgent:
             self.tools,
             llm=self.context.data["llm"],
             allow_parallel_tool_calls=False,
-            system_prompt=self.system_prompt
+            system_prompt=self.system_prompt,
         )
         self.agent = agent_worker.as_agent()
 
@@ -647,8 +730,8 @@ class ConciergeAgent:
         user_msg_str = input("> ").strip()
         return self.trigger_event(request=user_msg_str)
 
-draw_all_possible_flows(ConciergeWorkflow, filename="concierge_flows.html")
 
+draw_all_possible_flows(ConciergeWorkflow, filename="concierge_flows.html")
 
 
 async def main():
@@ -656,9 +739,11 @@ async def main():
     result = await c.run()
     print(result)
 
+
 # Check if an event loop is already running
 if __name__ == "__main__":
     import asyncio
+
     try:
         # If there's no running event loop, use asyncio.run()
         if not asyncio.get_event_loop().is_running():
@@ -673,6 +758,6 @@ if __name__ == "__main__":
     except RuntimeError:
         # For environments like Jupyter that may raise errors for nested event loops
         import nest_asyncio
+
         nest_asyncio.apply()
         asyncio.run(main())
-
