@@ -86,6 +86,7 @@ class ConciergeWorkflow(Workflow):
 
         print(f"Concierge: {response.response}")
         user_input = input("> ").strip()
+        # user_input = "generate a diagram which uses fargate and writes to s3"
         
         if user_input.lower() in ["exit", "quit", "bye"]:
             return StopEvent()

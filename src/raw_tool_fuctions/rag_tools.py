@@ -41,7 +41,7 @@ def find_similar_blogs(query: str) -> str:
     )
 
     response = index.as_chat_engine().chat(query)
-    return response
+    return str(response)
 
 
 if __name__ == "__main__":

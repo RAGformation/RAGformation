@@ -15,7 +15,7 @@ from llama_index.llms.openai import OpenAI
 from llama_index.indices.managed.llama_cloud import LlamaCloudIndex
 from typing import Dict, Any, List
 
-import openai
+import openai   
 import re
 import config
 
@@ -100,7 +100,7 @@ def text_to_diagram(requirements_plan: str) -> str:
     
     return "Diagram generated successfully."
 
-def _run_and_check_syntax() -> str:
+def _run_and_check_syntax(ctx) -> str:
     """
     Run the generated diagram code and check for syntax errors.
     
@@ -110,7 +110,6 @@ def _run_and_check_syntax() -> str:
     Returns:
     str: A message indicating whether the syntax is correct or describing any errors encountered.
     """
-    ctx = kwargs.get('ctx')
     try:
         result = subprocess.run(
             [config.PYTHON_PATH, "temp_generated_code.py"],
@@ -127,7 +126,7 @@ def _run_and_check_syntax() -> str:
         ctx.data['query'] += f"\n\n{response}"
     return response
 
-def _suggest_imports() -> str:
+def _suggest_imports(ctx) -> str:
     """
     Suggest correct imports based on the error message.
     
@@ -164,7 +163,7 @@ def _suggest_imports() -> str:
     ctx.data['query'] += f"\n\n{response}"
     return error_message
 
-def _fix_and_write_code() -> str:
+def _fix_and_write_code(ctx) -> str:
     """
     Fix errors in the code and write the corrected code to a file.
     
@@ -208,7 +207,7 @@ def _fix_and_write_code() -> str:
         ctx.data['query'] += f"\n\n{response}"
         return ctx.data['query']
 
-def _generate_diagram() -> str:
+def _generate_diagram(ctx) -> str:
     """
     Generate a diagram based on the text description in the context.
     

@@ -63,7 +63,6 @@ class ConciergeWorkflow(Workflow):
         if "user" not in ctx.data:
             return InitializeEvent()
 
-        self.log_history(ctx, "concierge", "user", ev.request)
         print(f"History in concierge: {ctx.data['history']}")
 
         if "concierge" not in ctx.data:
@@ -100,9 +99,8 @@ class ConciergeWorkflow(Workflow):
         print(response)
         user_msg_str = input("> ").strip()
         ctx.data['query'] += f"\n\n{user_msg_str}"
-
-        return OrchestratorEvent(request=user_msg_str)
-        # return ctx.data["concierge"].handle_event(ev)
+        self.log_history(ctx, "concierge", "user", user_msg_str)
+        return OrchestratorEvent(request=str(ctx.data['history']))
 
     @step(pass_context=True)
     async def orchestrator(self, ctx: Context, ev: OrchestratorEvent) -> ConciergeEvent | TextToDiagramEvent | TextToRAGEvent | StopEvent:
@@ -217,7 +215,7 @@ class ConciergeWorkflow(Workflow):
             return _fix_and_write_code(ctx)
 
         def generate_diagram() -> str:
-            """Use this tool to generate diagram."""
+            """Useful for describing a diagram using text."""
             return _generate_diagram(ctx)
         
         if "text_to_diagram_agent" not in ctx.data:
@@ -275,6 +273,8 @@ class ConciergeWorkflow(Workflow):
             print(response)
             
             ctx.data["rag_search_response"] = response
+            
+            print(f'rag search done {ctx.data["rag_search_response"]}')
             return response
         
         if "text_to_rag_agent" not in ctx.data:
