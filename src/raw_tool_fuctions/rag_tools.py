@@ -18,8 +18,9 @@ from llama_index.indices.managed.llama_cloud import LlamaCloudIndex
 import openai
 import re
 import config
+from utils.logging import wrapped_tool
 
-
+@wrapped_tool
 def find_similar_blogs(query: str) -> str:
     """
     Find and retrieve similar blog content based on the provided query.

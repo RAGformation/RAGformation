@@ -12,7 +12,6 @@ from raw_tool_fuctions.diagram_tools import (
     _generate_diagram,
 )
 
-# from tools.rag_tools import search_rag
 from raw_tool_fuctions.rag_tools import find_similar_blogs
 from raw_tool_fuctions.price_tools import get_price_for_service
 from events.event_types import (
@@ -32,7 +31,6 @@ from llama_index.core.workflow import (
     StopEvent,
 )
 from prompts import pricing_prompt_template, services
-
 
 class ConciergeWorkflow(Workflow):
     @staticmethod
@@ -221,18 +219,22 @@ class ConciergeWorkflow(Workflow):
         print(f"real query for t2d: {ctx.data['rag_search_response']}")
         self.log_history(ctx, "text_to_diagram", "user", ev.request)
 
+        
         def run_and_check_syntax() -> str:
             """Run the generated diagram code and check for syntax errors."""
             return _run_and_check_syntax(ctx)
 
+        
         def suggest_imports() -> str:
             """Suggest necessary imports for the diagram."""
             return _suggest_imports(ctx)
 
+        
         def fix_and_write_code() -> str:
             """Fix any errors in the generated code and write the corrected version to file."""
             return _fix_and_write_code(ctx)
-
+        
+        
         def generate_diagram() -> str:
             """Useful for describing a diagram using text."""
             return _generate_diagram(ctx)
@@ -281,9 +283,7 @@ class ConciergeWorkflow(Workflow):
     async def text_to_rag(
         self, ctx: Context, ev: TextToRAGEvent
     ) -> TextToDiagramEvent | ConciergeEvent:
-        print(f"Text to RAG received request: {ev.request}")
         self.log_history(ctx, "text_to_rag", "user", ev.request)
-
         def search_rag(text: str) -> str:
             """
             Perform a RAG (Retrieval-Augmented Generation) search using the provided text.

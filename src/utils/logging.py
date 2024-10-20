@@ -4,6 +4,43 @@ import sys
 from typing import Dict, Any
 from config import LOG_LEVEL, LOG_FILE
 
+RESET = "\033[0m"
+def print_pink(text):
+    # ANSI escape code for pink is 95 (bright magenta)
+    PINK = "\033[95m"
+    print(f"{PINK}{text}{RESET}")
+
+def print_red(text):
+    # ANSI escape code for red is 91 (bright red)
+    RED = "\033[91m"
+    print(f"{RED}{text}{RESET}")
+
+def print_green(text):
+    # ANSI escape code for green is 92 (bright green)
+    GREEN = "\033[92m"
+    print(f"{GREEN}{text}{RESET}")
+
+def print_blue(text):
+    # ANSI escape code for blue is 94 (bright blue)
+    BLUE = "\033[94m"
+    print(f"{BLUE}{text}{RESET}")
+
+def log_tool_use(tool_name, input_params, output):
+    # using blue color for tool logs
+    print_blue(f"Tool used: {tool_name}")
+    print_blue(f"Input: {input_params}")
+    print_blue(f"Output: {output}")
+
+def wrapped_tool(func):
+    """
+    Log stuff when the tools have completed execution.
+    """
+    def wrapper(*args, **kwargs):
+        result = func(*args, **kwargs)
+        log_tool_use(func.__name__, args, result)
+        return result
+    return wrapper
+
 
 def setup_logger():
     """

@@ -4,6 +4,7 @@ from typing import Optional
 import os
 from together import Together
 from prompts import txt_2_diagram_prompt_template, fix_import_prompt_template
+from utils.logging import wrapped_tool
 from PIL import Image
 from llama_index.llms.openai import OpenAI
 from llama_index.llms.together import TogetherLLM
@@ -217,7 +218,7 @@ def _fix_and_write_code(ctx) -> str:
         ctx.data["query"] += f"\n\n{response}"
         return ctx.data["query"]
 
-
+@wrapped_tool
 def _generate_diagram(ctx) -> str:
     """
     Generate a diagram based on the text description in the context.
