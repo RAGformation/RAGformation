@@ -113,5 +113,5 @@ def main():
             print(f"No price found for {service}")
 
 
-# Call the main function
-main()
+if __name__ == "__main__":
+    main()
