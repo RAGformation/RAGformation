@@ -7,8 +7,6 @@ We wanted to give you a heads-up that this repository is currently undergoing so
 
 # RAGformation
 
-[![Box Certificate](docs/boxCertificate.png)](docs/boxCertificate.pdf)
-
 ## Project name
 - RAGformation
 
@@ -102,9 +100,9 @@ Users are empowered to make informed decisions quickly, with visual representati
 
 # Accomplishments That We're Proud Of
 
-We are proud to have created **RAGformation**, an application that makes selecting and optimizing cloud services much easier and faster. By simplifying cloud complexity, we've empowered businesses to accelerate innovation without getting bogged down in the intricacies of cloud architecture. Our tool helps organizations quickly design tailored cloud solutions, optimize costs, and stay agile in a rapidly evolving tech landscape. We believe RAGformation will enable companies to focus more on driving growth and delivering value, rather than navigating the often daunting world of cloud services.
+[![Box Certificate](docs/boxCertificate.png)](docs/boxCertificate.pdf)
 
-- What we learned
+We are proud to have created **RAGformation**, an application that makes selecting and optimizing cloud services much easier and faster. By simplifying cloud complexity, we've empowered businesses to accelerate innovation without getting bogged down in the intricacies of cloud architecture. Our tool helps organizations quickly design tailored cloud solutions, optimize costs, and stay agile in a rapidly evolving tech landscape. We believe RAGformation will enable companies to focus more on driving growth and delivering value, rather than navigating the often daunting world of cloud services.
   
 # What's Next for RAGformation
 
