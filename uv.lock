@@ -631,12 +631,38 @@ wheels = [
 ]
 
 [[package]]
+name = "groq"
+version = "0.11.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anyio" },
+    { name = "distro" },
+    { name = "httpx" },
+    { name = "pydantic" },
+    { name = "sniffio" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/bb/4d/14b9a0c27695b2aa3bcd7f397a9c6d5aa84165d0bed4e4ca3f08fe59a546/groq-0.11.0.tar.gz", hash = "sha256:dbb9aefedf388ddd4801ec7bf3eba7f5edb67948fec0cd2829d97244059f42a7", size = 104986 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/94/c3/8bf3cd2987e262f9fd45024313dae1d009edaa7a5b429566edfdaedaa024/groq-0.11.0-py3-none-any.whl", hash = "sha256:e328531c979542e563668c62260aec13b43a6ee0ca9e2fb22dff1d26f8c8ce54", size = 106518 },
+]
+
+[[package]]
 name = "h11"
 version = "0.14.0"
 source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/f5/38/3af3d3633a34a3316095b39c8e8fb4853a28a536e55d347bd8d8e9a14b03/h11-0.14.0.tar.gz", hash = "sha256:8f19fbbe99e72420ff35c00b27a34cb9937e902a8b810e2c88300c6f0a3b699d", size = 100418 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/95/04/ff642e65ad6b90db43e668d70ffb6736436c7ce41fcc549f4e9472234127/h11-0.14.0-py3-none-any.whl", hash = "sha256:e3fe4ac4b851c468cc8363d500db52c2ead036020723024a109d37346efaa761", size = 58259 },
+]
+
+[[package]]
+name = "http-exceptions"
+version = "0.2.10"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/1a/ee/eed139b5dcd4019d1148eebffb199a22320b9e46e268de3bffcca9a9012c/http-exceptions-0.2.10.tar.gz", hash = "sha256:77484475de13ead5dac72816387dd3c5d3898fd2588af02c1cd5454fb7412c06", size = 9456 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/9d/ca/53101f30b30fe3c6c247aced01aeda263ef4ce8c8dad44f2d0d591a4f0b3/http_exceptions-0.2.10-py3-none-any.whl", hash = "sha256:26c97d021f798f8e6c9db477385d2e8f49ae2b26e6acb92b857637fb21cb1e2e", size = 8843 },
 ]
 
 [[package]]
@@ -1928,11 +1954,12 @@ dependencies = [
     { name = "pillow" },
     { name = "python-dotenv" },
     { name = "together" },
+    { name = "toolhouse" },
 ]
 
 [package.metadata]
 requires-dist = [
-    { name = "black" },
+    { name = "black", specifier = ">=24.10.0" },
     { name = "colorama", specifier = ">=0.4.6" },
     { name = "diagrams", specifier = ">=0.23.4" },
     { name = "llama-index", specifier = ">=0.11.17" },
@@ -1946,6 +1973,7 @@ requires-dist = [
     { name = "pillow", specifier = ">=10.4.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
     { name = "together", specifier = ">=1.3.1" },
+    { name = "toolhouse", specifier = ">=1.3.0" },
 ]
 
 [[package]]
@@ -2293,6 +2321,23 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/bb/37/eaa072b848471d31ae3df6e6d5be5ae594ed5fe39ca921e65cabf193dbde/tokenizers-0.20.1-cp312-cp312-musllinux_1_1_x86_64.whl", hash = "sha256:3ea919687aa7001a8ff1ba36ac64f165c4e89035f57998fa6cedcfd877be619d", size = 9304427 },
     { url = "https://files.pythonhosted.org/packages/41/ff/4aeb924d09f6561209b57af9123a0a28fa69472cc71ee40415f036253203/tokenizers-0.20.1-cp312-none-win32.whl", hash = "sha256:6d3ac5c1f48358ffe20086bf065e843c0d0a9fce0d7f0f45d5f2f9fba3609ca5", size = 2195986 },
     { url = "https://files.pythonhosted.org/packages/7e/ba/18bf6a7ad04f8225b71aa862b57188748d1d81e268de4a9aac1aed237246/tokenizers-0.20.1-cp312-none-win_amd64.whl", hash = "sha256:b0874481aea54a178f2bccc45aa2d0c99cd3f79143a0948af6a9a21dcc49173b", size = 2377984 },
+]
+
+[[package]]
+name = "toolhouse"
+version = "1.3.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anthropic" },
+    { name = "groq" },
+    { name = "http-exceptions" },
+    { name = "llama-index" },
+    { name = "openai" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/08/f3/1b6f5851cc2a8296806715ed9c34d94123fd8db6c2aee0c1d33539bcf6f6/toolhouse-1.3.0.tar.gz", hash = "sha256:be72e959c74c49d7ffd0bb232ebb82eeee518c4ba05516a1abf2a390b1fdf26f", size = 29867 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e5/f3/78534bca044ed7e221fee04143b680db5594aeb5921f21c7f1153c5a5d82/toolhouse-1.3.0-py3-none-any.whl", hash = "sha256:6d36e9c20eab8ad11dc5938c79cb01e44db5c1d73ad4b33392f754fcc1e60226", size = 40936 },
 ]
 
 [[package]]
